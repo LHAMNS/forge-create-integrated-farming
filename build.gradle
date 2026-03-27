@@ -1,0 +1,168 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
+}
+
+version = mod_version
+group = 'plus.dragons'
+archivesBaseName = 'forge-create-integrated-farming'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods {
+                create_integrated_farming {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+        }
+
+        server {
+            args '--nogui'
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = 'Create'
+        url = 'https://maven.createmod.net'
+    }
+    maven {
+        name = 'Registrate'
+        url = 'https://maven.ithundxr.dev/mirror'
+    }
+    maven {
+        name = 'Flywheel'
+        url = 'https://maven.createmod.net'
+    }
+    maven {
+        name = 'Jared'
+        url = 'https://maven.blamejared.com/'
+    }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+    }
+    maven {
+        name = 'Fuzss'
+        url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/'
+    }
+    maven {
+        name = 'FallenBreath'
+        url = 'https://maven.fallenbreath.me/releases'
+    }
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+        content { includeGroup "curse.maven" }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // Create 6.0.8 for Forge 1.20.1
+    implementation(fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim")) { transitive = false }
+    implementation fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}")
+    compileOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}")
+    runtimeOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
+    implementation fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}")
+
+    // Create: Dragons Plus (CDP) - compile dependency from libs/
+    implementation fileTree(dir: 'libs', include: ['forge-create-dragons-plus-*.jar'])
+
+    // Farmer's Delight (optional integration - needed at compile + datagen time)
+    implementation fg.deobf("maven.modrinth:farmers-delight:1.20.1-1.2.11")
+
+    // JEI (compile only)
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:15.2.0.27")
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:15.2.0.27")
+
+    // Optional mod integrations (compile only)
+    compileOnly fg.deobf("maven.modrinth:nether-depths-upgrade:3.1.5-1.20")
+    compileOnly fg.deobf("maven.modrinth:untitled-duck-mod:1.5.2")
+    compileOnly fg.deobf("maven.modrinth:my-nethers-delight:1.20.1-1.8")
+    compileOnly fg.deobf("maven.modrinth:corn-delight:1.1.9-1.20.1")
+    compileOnly fg.deobf("maven.modrinth:mmlib:1.6.34-1.20.1")
+    compileOnly fg.deobf("maven.modrinth:crabbers-delight:1.2.3")
+    compileOnly fg.deobf("maven.modrinth:create-enchantable-machinery:3.6.0+mc1.20.1-forge")
+    compileOnly fg.deobf("maven.modrinth:create-dreams-and-desires:1.20.1-0.2c.PREBETA")
+    compileOnly fg.deobf("maven.modrinth:create-garnished:2.1.7.b+1.20.1-forge")
+    compileOnly fg.deobf("maven.modrinth:geckolib:4.8.3")
+    // Delight o' Flight - not on Modrinth, use CurseMaven (1.21.1 jar as compile stub)
+    compileOnly files('libs/DelightoFlight-1.21.1-1.2.3.jar')
+    // GeckoLib stub for AnimationController$KeyframeEventHandler (missing in standard GeckoLib releases)
+    compileOnly files('libs/geckolib-stub.jar')
+
+    // Conditional Mixin (JarInJar embedded + compile dependency)
+    jarJar(group: 'me.fallenbreath', name: 'conditional-mixin-forge', version: '[0.6.0,1.0.0)') {
+        jarJar.pin(it, '0.6.3')
+    }
+    implementation "me.fallenbreath:conditional-mixin-forge:0.6.3"
+
+    // Mixin extras
+    implementation "io.github.llamalad7:mixinextras-common:0.4.1"
+    implementation(fg.deobf("io.github.llamalad7:mixinextras-forge:0.4.1"))
+
+    // Mixin processor
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+mixin {
+    add sourceSets.main, "create_integrated_farming.refmap.json"
+    config "create_integrated_farming.mixins.json"
+}
+
+processResources {
+    // No template expansion needed - mods.toml and pack.mcmeta are static
+}
+
+jar {
+    manifest {
+        attributes([
+                "Specification-Title"     : "Forge-Create: Integrated Farming",
+                "Specification-Vendor"    : "DragonsPlusMinecraft",
+                "Specification-Version"   : "1",
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : mod_version,
+                "Implementation-Vendor"   : "DragonsPlusMinecraft",
+                "MixinConfigs"            : "create_integrated_farming.mixins.json"
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.named('jarJar') {
+    finalizedBy 'reobfJarJar'
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('jarJar')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

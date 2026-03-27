@@ -1,0 +1,32 @@
+{
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": {
+        "type": "forge:mod_loaded",
+        "modid": "farmersdelight"
+      }
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "minecraft:brown_wool"
+    },
+    "/": {
+      "tag": "forge:rods/wooden"
+    },
+    "a": {
+      "item": "create:andesite_alloy"
+    }
+  },
+  "pattern": [
+    "#/",
+    "/a"
+  ],
+  "result": {
+    "count": 2,
+    "item": "create_integrated_farming:fishing_net"
+  }
+}

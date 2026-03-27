@@ -1,0 +1,25 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "plus.dragons.createintegratedfarming.mixin",
+  "plugin": "plus.dragons.createintegratedfarming.mixin.UniversalConditionalMixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "create_integrated_farming.refmap.json",
+  "mixins": [
+    "create.BlockBreakingMovementBehaviourMixin",
+    "create.HarvesterMovementBehaviourMixin",
+    "create.SawBlockEntityMixin",
+    "create.SawMovementBehaviourMixin",
+    "create.SeatBlockMixin",
+    "create.TreeCutterMixin",
+    "createenchantablemachinery.EnchantableHarvesterMovementBehaviourMixin",
+    "createenchantablemachinery.EnchantableSawMovementBehaviourMixin",
+    "delightoflight.LightningBoltMixin",
+    "netherdepthupgrade.ForgeEventsMixin",
+    "netherdepthupgrade.LavaFishingBobberEntityInvoker"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

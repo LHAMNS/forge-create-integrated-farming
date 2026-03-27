@@ -1,0 +1,332 @@
+/*
+ * Copyright (C) 2025  DragonsPlus
+ * SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package plus.dragons.createintegratedfarming.common.registry;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.util.valueproviders.UniformInt;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.fluids.FluidStack;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import plus.dragons.createintegratedfarming.common.CIFCommon;
+import plus.dragons.createintegratedfarming.common.ranching.roost.chicken.ChickenFoodFluid;
+import plus.dragons.createintegratedfarming.common.ranching.roost.chicken.ChickenFoodItem;
+import plus.dragons.createintegratedfarming.integration.ModIntegration;
+
+/**
+ * Registry for chicken food items and fluids, replacing NeoForge DataMaps for Forge 1.20.1.
+ * <p>
+ * Data is loaded from JSON files by {@link plus.dragons.createintegratedfarming.common.ranching.roost.chicken.ChickenFoodReloadListener},
+ * which calls {@link #reload(Map, Map)} to atomically replace all entries. Hardcoded defaults
+ * in {@link #register()} serve as fallback values that are populated during mod initialization
+ * and will be overridden once data packs are loaded via the reload listener.
+ * <p>
+ * Thread safety: The item and fluid maps are stored as volatile references to immutable maps.
+ * The {@link #reload(Map, Map)} method atomically replaces both references, ensuring that
+ * queries from the server tick thread always see a consistent snapshot even if a reload
+ * occurs concurrently on the resource reload thread.
+ * <p>
+ * Lookup priority:
+ * <ol>
+ *   <li>Explicit entry in the item/fluid food map (from JSON data or hardcoded registration)</li>
+ *   <li>Item tag fallback: items in {@link #CHICKEN_FOOD_TAG} receive default seed-equivalent values</li>
+ * </ol>
+ *
+ * @see plus.dragons.createintegratedfarming.common.ranching.roost.chicken.ChickenFoodReloadListener
+ */
+public class CIFChickenFoods {
+    private static final Logger LOGGER = CIFCommon.LOGGER;
+
+    /**
+     * Item tag for chicken food items. Items in this tag that are not explicitly registered
+     * via data packs or {@link #registerItemFood} will use a default seed-equivalent {@link ChickenFoodItem}.
+     * This provides a data-pack-driven way for modpacks to add chicken foods without code changes,
+     * partially compensating for the lack of NeoForge DataMaps in Forge 1.20.1.
+     */
+    /**
+     * Item tag for chicken food fallback. Uses minecraft namespace for upstream compatibility:
+     * upstream NeoForge references {@code #minecraft:chicken_food} in DataMaps.
+     */
+    public static final TagKey<Item> CHICKEN_FOOD_TAG = TagKey.create(
+            Registries.ITEM, new ResourceLocation("minecraft", "chicken_food"));
+
+    /**
+     * Volatile reference to the current item food map. Replaced atomically by {@link #reload}.
+     * Initialized with an empty map; populated by {@link #register()} and then by the reload listener.
+     */
+    private static volatile Map<Item, ChickenFoodItem> itemFoods = Collections.emptyMap();
+
+    /**
+     * Volatile reference to the current fluid food map. Replaced atomically by {@link #reload}.
+     * Initialized with an empty map; populated by {@link #register()} and then by the reload listener.
+     */
+    private static volatile Map<Fluid, ChickenFoodFluid> fluidFoods = Collections.emptyMap();
+
+    /**
+     * Cache for tag-based fallback results. When an item is not in the explicit map but matches
+     * {@link #CHICKEN_FOOD_TAG}, the result is cached here to avoid repeated tag iteration.
+     * Items confirmed NOT in the tag are also cached (as NEGATIVE_SENTINEL) to avoid repeated
+     * tag checks on non-food items passing through belts/hoppers.
+     * Cleared on {@link #reload} since tag membership may change with data packs.
+     */
+    private static final Map<Item, ChickenFoodItem> tagFallbackCache = new ConcurrentHashMap<>();
+
+    /** Sentinel value indicating an item was checked and is NOT a chicken food. Never returned to callers. */
+    private static final ChickenFoodItem NEGATIVE_SENTINEL = new ChickenFoodItem(
+            ConstantInt.of(0), ConstantInt.of(0), Optional.empty());
+
+    /** Default food values for tag-based fallback, equivalent to vanilla seed food values. */
+    private static final ChickenFoodItem DEFAULT_TAG_FOOD = new ChickenFoodItem(
+            ConstantInt.of(2400),
+            UniformInt.of(400, 800),
+            Optional.empty());
+
+    /**
+     * Registers a single item food entry into the current map.
+     * <p>
+     * Note: Entries registered this way will be overridden when the reload listener runs.
+     * This method is primarily for hardcoded defaults during mod initialization.
+     *
+     * @param item the item to register (must not be null)
+     * @param food the chicken food data (must not be null)
+     */
+    public static void registerItemFood(Item item, ChickenFoodItem food) {
+        if (item == null) {
+            LOGGER.warn("[CIFChickenFoods] Attempted to register null item, skipping");
+            return;
+        }
+        if (food == null) {
+            LOGGER.warn("[CIFChickenFoods] Attempted to register null food for item {}, skipping",
+                    BuiltInRegistries.ITEM.getKey(item));
+            return;
+        }
+        // Create a mutable copy, add entry, then replace with unmodifiable map
+        Map<Item, ChickenFoodItem> newMap = new HashMap<>(itemFoods);
+        newMap.put(item, food);
+        itemFoods = Collections.unmodifiableMap(newMap);
+    }
+
+    /**
+     * Registers a single fluid food entry into the current map.
+     * <p>
+     * Note: Entries registered this way will be overridden when the reload listener runs.
+     * This method is primarily for hardcoded defaults during mod initialization.
+     *
+     * @param fluid the fluid to register (must not be null)
+     * @param food  the chicken food data (must not be null)
+     */
+    public static void registerFluidFood(Fluid fluid, ChickenFoodFluid food) {
+        if (fluid == null) {
+            LOGGER.warn("[CIFChickenFoods] Attempted to register null fluid, skipping");
+            return;
+        }
+        if (food == null) {
+            LOGGER.warn("[CIFChickenFoods] Attempted to register null food for fluid {}, skipping",
+                    BuiltInRegistries.FLUID.getKey(fluid));
+            return;
+        }
+        Map<Fluid, ChickenFoodFluid> newMap = new HashMap<>(fluidFoods);
+        newMap.put(fluid, food);
+        fluidFoods = Collections.unmodifiableMap(newMap);
+    }
+
+    /**
+     * Atomically replaces all chicken food entries with data loaded from JSON.
+     * Called by {@link plus.dragons.createintegratedfarming.common.ranching.roost.chicken.ChickenFoodReloadListener}
+     * when data packs are loaded or reloaded.
+     * <p>
+     * If the loaded maps are empty (e.g., no JSON files found), the hardcoded defaults from
+     * {@link #register()} are preserved as fallback. This ensures the mod always has functional
+     * chicken food data even if no data packs provide chicken food JSON files.
+     *
+     * @param newItemFoods  the new item food map (must not be null; may be empty)
+     * @param newFluidFoods the new fluid food map (must not be null; may be empty)
+     */
+    public static void reload(Map<Item, ChickenFoodItem> newItemFoods, Map<Fluid, ChickenFoodFluid> newFluidFoods) {
+        if (newItemFoods == null) {
+            LOGGER.warn("[CIFChickenFoods] reload() received null item foods map, keeping existing data");
+            newItemFoods = new HashMap<>(itemFoods);
+        }
+        if (newFluidFoods == null) {
+            LOGGER.warn("[CIFChickenFoods] reload() received null fluid foods map, keeping existing data");
+            newFluidFoods = new HashMap<>(fluidFoods);
+        }
+
+        // Always apply the reload data, even if empty. This allows data packs to
+        // intentionally clear all chicken foods via replace=true with no entries.
+        // If no JSON files exist at all, the reload listener won't call reload(),
+        // so the hardcoded defaults from register() remain in effect.
+
+        // Atomically replace both maps with unmodifiable snapshots
+        itemFoods = Collections.unmodifiableMap(new HashMap<>(newItemFoods));
+        fluidFoods = Collections.unmodifiableMap(new HashMap<>(newFluidFoods));
+        tagFallbackCache.clear(); // Invalidate tag fallback cache since data may have changed
+
+        LOGGER.debug("[CIFChickenFoods] Reloaded: {} item food(s), {} fluid food(s)",
+                itemFoods.size(), fluidFoods.size());
+    }
+
+    /**
+     * Looks up chicken food data for the given item stack.
+     * <p>
+     * Lookup priority:
+     * <ol>
+     *   <li>Explicit entry in the item food map</li>
+     *   <li>Tag fallback: items in {@link #CHICKEN_FOOD_TAG} get default seed-equivalent values</li>
+     * </ol>
+     *
+     * @param stack the item stack to look up (may be null)
+     * @return the chicken food data, or {@code null} if the item is not a chicken food
+     */
+    public static @Nullable ChickenFoodItem getItemFood(@Nullable ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return null;
+        }
+        Item item = stack.getItem();
+        if (item == null) {
+            return null;
+        }
+        // Read volatile reference once for consistent snapshot
+        Map<Item, ChickenFoodItem> snapshot = itemFoods;
+        ChickenFoodItem food = snapshot.get(item);
+        if (food != null) {
+            return food;
+        }
+        // Check tag fallback cache (avoids repeated tag iteration on hot path).
+        // Positive hits return DEFAULT_TAG_FOOD; negative hits return NEGATIVE_SENTINEL.
+        food = tagFallbackCache.get(item);
+        if (food != null) {
+            return food == NEGATIVE_SENTINEL ? null : food;
+        }
+        // Tag-based fallback: items in the chicken_food tag get default seed-equivalent values.
+        // This allows modpacks to add chicken foods via data packs without code changes.
+        // Both positive AND negative results are cached to prevent repeated tag iteration
+        // on belts/hoppers where non-food items pass through frequently.
+        try {
+            if (stack.is(CHICKEN_FOOD_TAG)) {
+                tagFallbackCache.put(item, DEFAULT_TAG_FOOD);
+                return DEFAULT_TAG_FOOD;
+            }
+        } catch (Exception e) {
+            LOGGER.debug("[CIFChickenFoods] Error checking tag for item {}: {}",
+                    BuiltInRegistries.ITEM.getKey(item), e.getMessage());
+        }
+        // Cache negative result to avoid re-checking this item on every tick
+        tagFallbackCache.put(item, NEGATIVE_SENTINEL);
+        return null;
+    }
+
+    /**
+     * Looks up chicken food data for the given fluid stack.
+     *
+     * @param fluid the fluid stack to look up (may be null)
+     * @return the chicken food data, or {@code null} if the fluid is not a chicken food
+     */
+    public static @Nullable ChickenFoodFluid getFluidFood(@Nullable FluidStack fluid) {
+        if (fluid == null || fluid.isEmpty()) {
+            return null;
+        }
+        Fluid fluidType = fluid.getFluid();
+        if (fluidType == null) {
+            return null;
+        }
+        // Read volatile reference once for consistent snapshot
+        Map<Fluid, ChickenFoodFluid> snapshot = fluidFoods;
+        return snapshot.get(fluidType);
+    }
+
+    /**
+     * Returns an unmodifiable view of the current item food map.
+     * Useful for debugging or integration purposes.
+     *
+     * @return the current item food map (never null)
+     */
+    public static Map<Item, ChickenFoodItem> getItemFoods() {
+        return itemFoods;
+    }
+
+    /**
+     * Returns an unmodifiable view of the current fluid food map.
+     * Useful for debugging or integration purposes.
+     *
+     * @return the current fluid food map (never null)
+     */
+    public static Map<Fluid, ChickenFoodFluid> getFluidFoods() {
+        return fluidFoods;
+    }
+
+    /**
+     * Registers hardcoded default chicken food entries.
+     * <p>
+     * These defaults serve as fallback values until the reload listener loads JSON data from data packs.
+     * Once the reload listener runs (which happens after world load), JSON-defined entries will replace
+     * these defaults. If no JSON data packs are present, these hardcoded values remain in effect.
+     * <p>
+     * Called during {@link net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent} via
+     * {@link CIFCommon#onCommonSetup}.
+     */
+    public static void register() {
+        LOGGER.debug("[CIFChickenFoods] Registering hardcoded default chicken foods");
+
+        // Register vanilla chicken food items (equivalent to CHICKEN_FOOD tag items)
+        ChickenFoodItem seedFood = new ChickenFoodItem(
+                ConstantInt.of(2400),
+                UniformInt.of(400, 800),
+                Optional.empty());
+        registerItemFood(Items.WHEAT_SEEDS, seedFood);
+        registerItemFood(Items.MELON_SEEDS, seedFood);
+        registerItemFood(Items.PUMPKIN_SEEDS, seedFood);
+        registerItemFood(Items.BEETROOT_SEEDS, seedFood);
+        registerItemFood(Items.TORCHFLOWER_SEEDS, seedFood);
+        registerItemFood(Items.PITCHER_POD, seedFood);
+
+        // Register Create Crafts & Additions seed oil if the mod is loaded
+        if (ModIntegration.CREATE_CRAFT_AND_ADDITIONS.enabled()) {
+            try {
+                Fluid seedOil = BuiltInRegistries.FLUID.get(
+                        new ResourceLocation(ModIntegration.Mods.CREATE_CRAFT_AND_ADDITIONS, "seed_oil"));
+                if (seedOil != net.minecraft.world.level.material.Fluids.EMPTY) {
+                    registerFluidFood(seedOil, new ChickenFoodFluid(
+                            ConstantInt.of(2400),
+                            UniformInt.of(400, 800),
+                            100));
+                } else {
+                    LOGGER.debug("[CIFChickenFoods] Create Crafts & Additions loaded but seed_oil fluid not found");
+                }
+            } catch (Exception e) {
+                LOGGER.warn("[CIFChickenFoods] Failed to register seed_oil fluid food: {}", e.getMessage());
+            }
+        }
+
+        LOGGER.info("[CIFChickenFoods] Registered {} hardcoded item food(s) and {} hardcoded fluid food(s)",
+                itemFoods.size(), fluidFoods.size());
+    }
+}

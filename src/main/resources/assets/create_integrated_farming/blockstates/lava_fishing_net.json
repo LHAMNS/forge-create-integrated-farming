@@ -1,0 +1,82 @@
+{
+  "variants": {
+    "facing=down,fluid=empty": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 180
+    },
+    "facing=down,fluid=water": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 180
+    },
+    "facing=down,fluid=lava": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 180
+    },
+    "facing=east,fluid=empty": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,fluid=water": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,fluid=lava": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north,fluid=empty": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90
+    },
+    "facing=north,fluid=water": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90
+    },
+    "facing=north,fluid=lava": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90
+    },
+    "facing=south,fluid=empty": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,fluid=water": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,fluid=lava": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up,fluid=empty": {
+      "model": "create_integrated_farming:block/lava_fishing_net"
+    },
+    "facing=up,fluid=water": {
+      "model": "create_integrated_farming:block/lava_fishing_net"
+    },
+    "facing=up,fluid=lava": {
+      "model": "create_integrated_farming:block/lava_fishing_net"
+    },
+    "facing=west,fluid=empty": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,fluid=water": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,fluid=lava": {
+      "model": "create_integrated_farming:block/lava_fishing_net",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

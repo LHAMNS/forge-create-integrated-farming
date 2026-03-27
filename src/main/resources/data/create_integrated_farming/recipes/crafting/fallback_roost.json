@@ -1,0 +1,33 @@
+{
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": {
+        "type": "forge:mod_loaded",
+        "modid": "farmersdelight"
+      }
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "minecraft:hay_block"
+    },
+    "b": {
+      "item": "minecraft:bamboo"
+    },
+    "c": {
+      "item": "minecraft:wheat"
+    }
+  },
+  "pattern": [
+    "b b",
+    "#c#",
+    "b#b"
+  ],
+  "result": {
+    "count": 1,
+    "item": "create_integrated_farming:roost"
+  }
+}

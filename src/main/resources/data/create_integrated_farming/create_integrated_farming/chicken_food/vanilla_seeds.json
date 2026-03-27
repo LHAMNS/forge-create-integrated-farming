@@ -1,0 +1,71 @@
+{
+  "replace": false,
+  "items": {
+    "minecraft:wheat_seeds": {
+      "progress": {
+        "type": "minecraft:constant",
+        "value": 2400
+      },
+      "cooldown": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 400,
+        "max_inclusive": 800
+      }
+    },
+    "minecraft:melon_seeds": {
+      "progress": {
+        "type": "minecraft:constant",
+        "value": 2400
+      },
+      "cooldown": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 400,
+        "max_inclusive": 800
+      }
+    },
+    "minecraft:pumpkin_seeds": {
+      "progress": {
+        "type": "minecraft:constant",
+        "value": 2400
+      },
+      "cooldown": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 400,
+        "max_inclusive": 800
+      }
+    },
+    "minecraft:beetroot_seeds": {
+      "progress": {
+        "type": "minecraft:constant",
+        "value": 2400
+      },
+      "cooldown": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 400,
+        "max_inclusive": 800
+      }
+    },
+    "minecraft:torchflower_seeds": {
+      "progress": {
+        "type": "minecraft:constant",
+        "value": 2400
+      },
+      "cooldown": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 400,
+        "max_inclusive": 800
+      }
+    },
+    "minecraft:pitcher_pod": {
+      "progress": {
+        "type": "minecraft:constant",
+        "value": 2400
+      },
+      "cooldown": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 400,
+        "max_inclusive": 800
+      }
+    }
+  }
+}

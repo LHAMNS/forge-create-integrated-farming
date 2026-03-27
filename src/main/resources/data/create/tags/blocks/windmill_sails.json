@@ -1,0 +1,9 @@
+{
+  "values": [
+    "create_integrated_farming:fishing_net",
+    {
+      "id": "create_integrated_farming:lava_fishing_net",
+      "required": false
+    }
+  ]
+}
