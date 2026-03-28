@@ -27,7 +27,6 @@ import net.minecraftforge.fml.common.Mod;
 import plus.dragons.createintegratedfarming.client.ponder.CIFPonderPlugin;
 import plus.dragons.createintegratedfarming.common.CIFCommon;
 import plus.dragons.createintegratedfarming.common.registry.CIFLootTables;
-import plus.dragons.createintegratedfarming.integration.farmersdelight.data.FDRecipeProvider;
 
 /**
  * Data generation entry point for Create: Integrated Farming.
@@ -49,7 +48,14 @@ public class CIFData {
         var output = generator.getPackOutput();
         var server = event.includeServer();
         generator.addProvider(server, new CIFRecipeProvider(output));
-        // Farmer's Delight integration recipes (conditional on FD being loaded at runtime)
-        generator.addProvider(server, new FDRecipeProvider(output));
+        // Farmer's Delight integration recipes — only if FD is on the classpath.
+        // FDRecipeProvider directly imports vectorwing.farmersdelight classes,
+        // so instantiating it without FD causes NoClassDefFoundError.
+        try {
+            Class.forName("vectorwing.farmersdelight.FarmersDelight");
+            generator.addProvider(server, new plus.dragons.createintegratedfarming.integration.farmersdelight.data.FDRecipeProvider(output));
+        } catch (ClassNotFoundException | NoClassDefFoundError e) {
+            CIFCommon.LOGGER.info("[CIFData] Farmer's Delight not found on classpath, skipping FD recipe datagen");
+        }
     }
 }

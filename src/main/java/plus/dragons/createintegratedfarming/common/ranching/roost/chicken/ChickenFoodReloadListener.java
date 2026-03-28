@@ -105,6 +105,7 @@ public class ChickenFoodReloadListener extends SimpleJsonResourceReloadListener 
     protected void apply(Map<ResourceLocation, JsonElement> entries, ResourceManager resourceManager, ProfilerFiller profiler) {
         Map<Item, ChickenFoodItem> itemFoods = new HashMap<>();
         Map<Fluid, ChickenFoodFluid> fluidFoods = new HashMap<>();
+        boolean explicitReplace = false;
         int itemCount = 0;
         int fluidCount = 0;
         int errorCount = 0;
@@ -161,6 +162,7 @@ public class ChickenFoodReloadListener extends SimpleJsonResourceReloadListener 
                     LOGGER.debug("[ChickenFoodReloadListener] File '{}' has replace=true, clearing all previously loaded entries", fileId);
                     itemFoods.clear();
                     fluidFoods.clear();
+                    explicitReplace = true;
                 }
 
                 // Parse item foods
@@ -262,6 +264,14 @@ public class ChickenFoodReloadListener extends SimpleJsonResourceReloadListener 
                 LOGGER.warn("[ChickenFoodReloadListener] '{}': failed to parse JSON file: {}", fileId, e.getMessage());
                 errorCount++;
             }
+        }
+
+        // If both maps are empty and no file explicitly used replace:true,
+        // all entries were skipped (e.g. forge:conditions not met).
+        // Preserve the hardcoded defaults from CIFChickenFoods.register().
+        if (itemFoods.isEmpty() && fluidFoods.isEmpty() && !explicitReplace) {
+            LOGGER.debug("[ChickenFoodReloadListener] All {} file(s) were skipped or yielded no entries, keeping hardcoded defaults", entries.size());
+            return;
         }
 
         // Atomically replace all food maps in CIFChickenFoods
