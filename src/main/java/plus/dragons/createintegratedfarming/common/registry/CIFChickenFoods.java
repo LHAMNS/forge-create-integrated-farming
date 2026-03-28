@@ -188,11 +188,12 @@ public class CIFChickenFoods {
             newFluidFoods = new HashMap<>(current.fluids());
         }
 
-        // Atomically replace both maps with a single volatile write.
+        // Defensively copy incoming maps to decouple from caller's references.
+        // Then atomically replace both maps with a single volatile write.
         // This ensures readers always see a consistent pair of item + fluid maps.
         foodMaps = new FoodMaps(
-                Collections.unmodifiableMap(newItemFoods),
-                Collections.unmodifiableMap(newFluidFoods));
+                Collections.unmodifiableMap(new HashMap<>(newItemFoods)),
+                Collections.unmodifiableMap(new HashMap<>(newFluidFoods)));
         tagFallbackCache.clear(); // Invalidate tag fallback cache since data may have changed
 
         LOGGER.debug("[CIFChickenFoods] Reloaded: {} item food(s), {} fluid food(s)",

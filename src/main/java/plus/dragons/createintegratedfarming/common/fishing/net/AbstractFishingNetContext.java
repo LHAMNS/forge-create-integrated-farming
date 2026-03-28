@@ -106,7 +106,7 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
         player.setPos(context.position);
         return new LootParams.Builder(level)
                 .withParameter(LootContextParams.THIS_ENTITY, entity)
-                .withParameter(LootContextParams.ORIGIN, context.position)
+                .withParameter(LootContextParams.ORIGIN, entity.position())
                 .withParameter(LootContextParams.DAMAGE_SOURCE, level.damageSources().playerAttack(player))
                 .withParameter(LootContextParams.KILLER_ENTITY, player)
                 .withParameter(LootContextParams.DIRECT_KILLER_ENTITY, fishingHook)
@@ -116,10 +116,11 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
 
     public LootParams buildFishingLootContext(MovementContext context, ServerLevel level, BlockPos pos) {
         FishingNetFakePlayer player = getPlayer();
-        fishingHook.setPos(context.position);
+        var fishingPos = net.minecraft.world.phys.Vec3.atCenterOf(pos);
+        fishingHook.setPos(fishingPos);
         player.setPos(context.position);
         return new LootParams.Builder(level)
-                .withParameter(LootContextParams.ORIGIN, context.position)
+                .withParameter(LootContextParams.ORIGIN, fishingPos)
                 .withParameter(LootContextParams.TOOL, fishingRod)
                 .withParameter(LootContextParams.THIS_ENTITY, fishingHook)
                 .withParameter(LootContextParams.KILLER_ENTITY, player)

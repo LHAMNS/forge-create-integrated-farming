@@ -231,7 +231,7 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
         assert level != null;
         ItemStack stack = transported.stack.copy();
         if (feedItem(stack, simulate)) {
-            if (!simulate) stack.shrink(1);
+            stack.shrink(1);
         }
         return stack;
     }

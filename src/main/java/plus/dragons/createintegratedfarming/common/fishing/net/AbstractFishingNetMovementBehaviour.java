@@ -44,6 +44,8 @@ import plus.dragons.createintegratedfarming.config.CIFConfig;
 public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFishingNetContext<?>> implements MovementBehaviour {
     /** Cached entity type test to avoid allocation per scan cycle. */
     private static final EntityTypeTest<net.minecraft.world.entity.Entity, LivingEntity> LIVING_ENTITY_TEST = EntityTypeTest.forClass(LivingEntity.class);
+    /** Maximum number of entities captured per scan cycle to prevent lag spikes in dense areas. */
+    private static final int MAX_CAPTURES_PER_SCAN = 3;
 
     protected abstract T getFishingNetContext(MovementContext context, ServerLevel level);
 
@@ -52,6 +54,8 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
 
     protected boolean canCaptureEntity(LivingEntity entity) {
         if (entity instanceof Enemy)
+            return false;
+        if (entity.isBaby())
             return false;
         if (entity instanceof WaterAnimal) {
             var dimensions = entity.getDimensions(Pose.SWIMMING);
@@ -73,6 +77,8 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
                     experience = ForgeEventFactory.getExperienceDrop(entity, fishing.getPlayer(), mob.getExperienceReward());
                 }
                 int nuggetCount = (experience + 2) / 3;
+                int maxStackSize = AllItems.EXP_NUGGET.get().getMaxStackSize();
+                nuggetCount = Math.min(nuggetCount, maxStackSize);
                 if (nuggetCount > 0) {
                     dropItem(context, new ItemStack(AllItems.EXP_NUGGET.get(), nuggetCount));
                 }
@@ -95,7 +101,8 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
                         .expandTowards(context.motion.scale(5))
                         .move(context.position)
                         .inflate(0.2);
-                level.getEntities(LIVING_ENTITY_TEST, area, this::canCaptureEntity)
+                List<LivingEntity> candidates = level.getEntities(LIVING_ENTITY_TEST, area, this::canCaptureEntity);
+                candidates.stream().limit(MAX_CAPTURES_PER_SCAN)
                         .forEach(entity -> this.onCaptureEntity(context, level, fishing, entity));
             }
         }

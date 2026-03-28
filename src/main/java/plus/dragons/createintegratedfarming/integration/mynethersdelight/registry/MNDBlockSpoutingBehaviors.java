@@ -47,6 +47,9 @@ public class MNDBlockSpoutingBehaviors {
             return 0;
         if (!simulate && level instanceof ServerLevel) {
             BlockState state = level.getBlockState(pos);
+            // Verify the block is still letios compost before triggering random tick
+            if (!state.is(BuiltInRegistries.BLOCK.get(ModIntegration.MY_NETHERS_DELIGHT.asResource("letios_compost"))))
+                return 0;
             state.randomTick((ServerLevel) level, pos, level.random);
         }
         return 250;

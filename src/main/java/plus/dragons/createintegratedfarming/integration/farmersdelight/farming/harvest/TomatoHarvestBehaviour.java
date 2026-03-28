@@ -95,8 +95,12 @@ public class TomatoHarvestBehaviour implements CustomHarvestBehaviour {
         BlockState result = cachedRope;
         if (result != null) return result;
         // Lazy initialization with volatile write; benign race is OK (same result computed twice)
-        ResourceLocation ropeId = new ResourceLocation(Configuration.DEFAULT_TOMATO_VINE_ROPE.get());
-        result = BuiltInRegistries.BLOCK.get(ropeId).defaultBlockState();
+        ResourceLocation ropeId = ResourceLocation.tryParse(Configuration.DEFAULT_TOMATO_VINE_ROPE.get());
+        if (ropeId != null) {
+            result = BuiltInRegistries.BLOCK.get(ropeId).defaultBlockState();
+        } else {
+            result = ModBlocks.ROPE.get().defaultBlockState();
+        }
         if (result.isAir())
             result = ModBlocks.ROPE.get().defaultBlockState();
         cachedRope = result;

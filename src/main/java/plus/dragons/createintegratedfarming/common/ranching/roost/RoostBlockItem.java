@@ -82,6 +82,9 @@ public class RoostBlockItem extends BlockItem {
                 if (result.consumesAction()) {
                     // Consume the spawner: replace with an empty spawner (reset spawn data)
                     clearSpawner(spawnerBE, pos);
+                } else {
+                    // Discard the temporary entity if capture was not successful to prevent entity leak
+                    entity.discard();
                 }
                 return result;
             }
@@ -99,6 +102,9 @@ public class RoostBlockItem extends BlockItem {
                         InteractionResult result = capturable.captureItem(level, context.getItemInHand(), context.getHand(), player, entity);
                         if (result.consumesAction()) {
                             clearSpawner(spawnerBE, pos);
+                        } else {
+                            // Discard the temporary entity if capture was not successful to prevent entity leak
+                            entity.discard();
                         }
                         return result;
                     }

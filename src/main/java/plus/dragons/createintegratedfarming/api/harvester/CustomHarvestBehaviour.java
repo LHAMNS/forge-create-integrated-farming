@@ -176,9 +176,8 @@ public interface CustomHarvestBehaviour {
                     droppedItemCallback.accept(itemStack);
                 if (dropEvent.getExperience() > 0)
                     state.getBlock().popExperience(serverLevel, pos, dropEvent.getExperience());
+                state.spawnAfterBreak(serverLevel, pos, usedTool, true);
             }
-
-            state.spawnAfterBreak(serverLevel, pos, usedTool, true);
         }
 
         level.setBlockAndUpdate(pos, newState);

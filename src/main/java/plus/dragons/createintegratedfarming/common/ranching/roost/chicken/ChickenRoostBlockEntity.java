@@ -50,7 +50,7 @@ public class ChickenRoostBlockEntity extends AnimalRoostBlockEntity {
 
     @Override
     public boolean feedItem(ItemStack stack, boolean simulate) {
-        assert level != null;
+        if (level == null) return false;
         if (feedCooldown > 0 || eggTime <= 0)
             return false;
         var food = CIFChickenFoods.getItemFood(stack);
@@ -95,7 +95,7 @@ public class ChickenRoostBlockEntity extends AnimalRoostBlockEntity {
     }
 
     public void feed(ChickenFood food) {
-        assert level != null;
+        if (level == null) return;
         eggTime = Math.max(0, eggTime - food.getProgress(level.random));
         feedCooldown = food.getCooldown(level.random);
         level.playSound(
