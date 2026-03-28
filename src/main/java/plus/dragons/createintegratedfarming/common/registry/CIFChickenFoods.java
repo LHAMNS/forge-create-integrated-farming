@@ -88,11 +88,19 @@ public class CIFChickenFoods {
     private static volatile FoodMaps foodMaps = new FoodMaps(Collections.emptyMap(), Collections.emptyMap());
 
     /**
+     * Maximum size for the tag fallback cache. In practice, the cache is bounded by the number
+     * of unique items in the game, but this hard cap prevents pathological growth if a mod
+     * generates dynamic items.
+     */
+    private static final int TAG_FALLBACK_CACHE_MAX_SIZE = 4096;
+
+    /**
      * Cache for tag-based fallback results. When an item is not in the explicit map but matches
      * {@link #CHICKEN_FOOD_TAG}, the result is cached here to avoid repeated tag iteration.
      * Items confirmed NOT in the tag are also cached (as NEGATIVE_SENTINEL) to avoid repeated
      * tag checks on non-food items passing through belts/hoppers.
      * Cleared on {@link #reload} since tag membership may change with data packs.
+     * Capped at {@link #TAG_FALLBACK_CACHE_MAX_SIZE} entries to prevent unbounded growth.
      */
     private static final Map<Item, ChickenFoodItem> tagFallbackCache = new ConcurrentHashMap<>();
 
@@ -229,7 +237,9 @@ public class CIFChickenFoods {
         // on belts/hoppers where non-food items pass through frequently.
         try {
             if (stack.is(CHICKEN_FOOD_TAG)) {
-                tagFallbackCache.put(item, DEFAULT_TAG_FOOD);
+                if (tagFallbackCache.size() < TAG_FALLBACK_CACHE_MAX_SIZE) {
+                    tagFallbackCache.put(item, DEFAULT_TAG_FOOD);
+                }
                 return DEFAULT_TAG_FOOD;
             }
         } catch (Exception e) {
@@ -237,7 +247,9 @@ public class CIFChickenFoods {
                     BuiltInRegistries.ITEM.getKey(item), e.getMessage());
         }
         // Cache negative result to avoid re-checking this item on every tick
-        tagFallbackCache.put(item, NEGATIVE_SENTINEL);
+        if (tagFallbackCache.size() < TAG_FALLBACK_CACHE_MAX_SIZE) {
+            tagFallbackCache.put(item, NEGATIVE_SENTINEL);
+        }
         return null;
     }
 

@@ -70,6 +70,14 @@ public class FishingNetFakePlayer extends FakePlayer {
     }
 
     /**
+     * Clears the entire pool. Called on server shutdown (ServerStoppingEvent)
+     * to ensure no stale references survive a crash or restart cycle.
+     */
+    public static void clearAll() {
+        POOL.clear();
+    }
+
+    /**
      * Resets mutable transient state that could leak between fishing net uses.
      * Only resets fields that loot functions or event handlers might reasonably modify.
      */

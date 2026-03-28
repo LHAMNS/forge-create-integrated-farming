@@ -35,7 +35,7 @@ description='''Fishing nets, chicken roosts, and farming automation for Create.'
 [[dependencies.create_integrated_farming]]
     modId="create_dragons_plus"
     mandatory=true
-    versionRange="[1.0.0,)"
+    versionRange="[1.0.0,2.0.0)"
     ordering="AFTER"
     side="BOTH"
 
@@ -90,6 +90,13 @@ description='''Fishing nets, chicken roosts, and farming automation for Create.'
 
 [[dependencies.create_integrated_farming]]
     modId="createenchantablemachinery"
+    mandatory=false
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.create_integrated_farming]]
+    modId="createadditions"
     mandatory=false
     versionRange="[1.0,)"
     ordering="AFTER"

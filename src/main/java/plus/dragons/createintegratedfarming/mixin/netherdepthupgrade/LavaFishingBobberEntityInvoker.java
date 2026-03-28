@@ -26,8 +26,8 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import plus.dragons.createintegratedfarming.integration.ModIntegration.Mods;
 
 @Restriction(require = @Condition(Mods.NETHER_DEPTHS_UPGRADE))
-@Mixin(targets = "com.scouter.netherdepthsupgrade.entity.entities.LavaFishingBobberEntity")
+@Mixin(targets = "com.scouter.netherdepthsupgrade.entity.entities.LavaFishingBobberEntity", remap = false)
 public interface LavaFishingBobberEntityInvoker {
-    @Invoker(value = "calculateOpenLava")
+    @Invoker(value = "calculateOpenLava", remap = false)
     boolean invokeCalculateOpenLava(BlockPos pos);
 }

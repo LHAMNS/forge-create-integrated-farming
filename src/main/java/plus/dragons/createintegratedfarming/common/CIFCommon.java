@@ -107,6 +107,10 @@ public class CIFCommon {
                 FishingNetFakePlayer.onLevelUnload(serverLevel);
             }
         });
+        // Clear entire FakePlayer pool on server shutdown to prevent stale references after crash
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppingEvent event) -> {
+            FishingNetFakePlayer.clearAll();
+        });
         CIFData.register();
         CIFConfig.register();
     }

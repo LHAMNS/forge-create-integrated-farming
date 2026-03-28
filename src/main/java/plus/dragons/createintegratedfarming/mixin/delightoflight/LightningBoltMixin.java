@@ -45,7 +45,7 @@ public abstract class LightningBoltMixin extends Entity {
     protected abstract BlockPos getStrikePosition();
 
     @Inject(method = "powerLightningRod", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/LightningRodBlock;onLightningStrike(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V", shift = At.Shift.AFTER))
-    private void injected(CallbackInfo ci) {
+    private void createintegratedfarming$onLightningStrike(CallbackInfo ci) {
         BlockPos blockpos = this.getStrikePosition();
         BlockPos below = blockpos.below();
         Level world = this.level;

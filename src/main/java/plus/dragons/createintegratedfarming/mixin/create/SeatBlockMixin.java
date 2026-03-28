@@ -29,7 +29,7 @@ import plus.dragons.createintegratedfarming.config.CIFConfig;
 
 @Mixin(value = SeatBlock.class, remap = false)
 public class SeatBlockMixin {
-    @ModifyExpressionValue(method = "m_5548_", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/actors/seat/SeatBlock;canBePickedUp(Lnet/minecraft/world/entity/Entity;)Z"))
+    @ModifyExpressionValue(method = "entityInside", remap = true, at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/actors/seat/SeatBlock;canBePickedUp(Lnet/minecraft/world/entity/Entity;)Z", remap = false))
     private boolean createintegratedfarming$ignoreLeashedEntity(boolean original, BlockGetter level, Entity entity) {
         if (entity instanceof Mob mob && mob.isLeashed())
             return original && CIFConfig.server().leashedEntitySitsAutomatically.get();

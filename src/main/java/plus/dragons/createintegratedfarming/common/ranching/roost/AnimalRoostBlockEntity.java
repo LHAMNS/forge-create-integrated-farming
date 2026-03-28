@@ -115,6 +115,12 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
     }
 
     @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        outputCapability = LazyOptional.of(() -> outputHandler);
+    }
+
+    @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         behaviours.add(new DirectBeltInputBehaviour(this)
                 .onlyInsertWhen(side -> side == getBlockState().getValue(HorizontalDirectionalBlock.FACING).getOpposite())
