@@ -23,6 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.valueproviders.ConstantInt;
@@ -60,10 +61,17 @@ public abstract class UntitledAnimalRoostBlockEntity extends AnimalRoostBlockEnt
         Direction facing = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
         Vec3 feedPos = Vec3.atBottomCenterOf(worldPosition)
                 .add(facing.getStepX() * .5f, 13 / 16f, facing.getStepZ() * .5f);
-        level.addParticle(
-                new ItemParticleOption(ParticleTypes.ITEM, stack),
-                feedPos.x, feedPos.y, feedPos.z,
-                0, 0, 0);
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(
+                    new ItemParticleOption(ParticleTypes.ITEM, stack),
+                    feedPos.x, feedPos.y, feedPos.z,
+                    1, 0, 0, 0, 0.0);
+        } else {
+            level.addParticle(
+                    new ItemParticleOption(ParticleTypes.ITEM, stack),
+                    feedPos.x, feedPos.y, feedPos.z,
+                    0, 0, 0);
+        }
         eggTime = Math.max(0, eggTime - FOOD_PROGRESSION.sample(level.random));
         feedCooldown = FOOD_COOLDOWN.sample(level.random);
         level.playSound(

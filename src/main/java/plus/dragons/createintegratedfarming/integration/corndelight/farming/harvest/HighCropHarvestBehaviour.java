@@ -21,11 +21,11 @@ package plus.dragons.createintegratedfarming.integration.corndelight.farming.har
 import cn.mcmod_mmf.mmlib.block.HighCropBlock;
 import com.simibubi.create.content.contraptions.actors.harvester.HarvesterMovementBehaviour;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
-import com.simibubi.create.foundation.utility.BlockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +60,8 @@ public class HighCropHarvestBehaviour implements CustomHarvestBehaviour {
             BlockPos above = pos.above();
             BlockState aboveState = level.getBlockState(above);
             while (aboveState.is(crop)) {
-                BlockHelper.destroyBlockAs(level, above, null, harvestTool, 1,
+                CustomHarvestBehaviour.harvestBlock(level, above, Blocks.AIR.defaultBlockState(),
+                        null, harvestTool, 1,
                         stack -> behaviour.dropItem(context, stack));
                 above = above.above();
                 aboveState = level.getBlockState(above);
@@ -101,9 +102,10 @@ public class HighCropHarvestBehaviour implements CustomHarvestBehaviour {
         if (aboveState.is(crop)) {
             destroy(level, behaviour, context, abovePos, aboveState, harvestTool);
         }
-        BlockHelper.destroyBlockAs(
+        CustomHarvestBehaviour.harvestBlock(
                 level,
                 pos,
+                Blocks.AIR.defaultBlockState(),
                 null,
                 harvestTool,
                 1,

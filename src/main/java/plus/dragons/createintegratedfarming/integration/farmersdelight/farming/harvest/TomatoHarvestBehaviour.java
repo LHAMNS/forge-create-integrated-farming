@@ -62,6 +62,8 @@ public class TomatoHarvestBehaviour implements CustomHarvestBehaviour {
             level.playSound(null, pos, ModSounds.ITEM_TOMATO_PICK_FROM_BUSH.get(), SoundSource.BLOCKS, 1.0F, 0.8F + level.random.nextFloat() * 0.4F);
             level.setBlock(pos, state.setValue(tomato.getAgeProperty(), 0), 2);
         } else if (partial) {
+            dropTomatoes(level, behaviour, context);
+            level.playSound(null, pos, ModSounds.ITEM_TOMATO_PICK_FROM_BUSH.get(), SoundSource.BLOCKS, 1.0F, 0.8F + level.random.nextFloat() * 0.4F);
             level.setBlock(pos, state.setValue(tomato.getAgeProperty(), 0), 2);
         }
     }

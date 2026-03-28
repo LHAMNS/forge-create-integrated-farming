@@ -125,9 +125,10 @@ public interface CustomHarvestBehaviour {
             if (enchTag.isEmpty())
                 return original;
             ItemStack cached = ENCHANTMENTS_DECODER_CACHE.getUnchecked(enchTag);
-            // Apply enchantments from cached tool to original
-            EnchantmentHelper.setEnchantments(EnchantmentHelper.getEnchantments(cached), original);
-            return original;
+            // Copy to avoid mutating the caller's ItemStack
+            ItemStack result = original.copy();
+            EnchantmentHelper.setEnchantments(EnchantmentHelper.getEnchantments(cached), result);
+            return result;
         }
         return original;
     }

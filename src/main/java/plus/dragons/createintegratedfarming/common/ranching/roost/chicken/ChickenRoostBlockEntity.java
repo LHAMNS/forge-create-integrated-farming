@@ -24,6 +24,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
@@ -65,10 +66,17 @@ public class ChickenRoostBlockEntity extends AnimalRoostBlockEntity {
         if (convertsTo.isPresent()) {
             Containers.dropItemStack(level, feedPos.x, feedPos.y, feedPos.z, convertsTo.get().copy());
         }
-        level.addParticle(
-                new ItemParticleOption(ParticleTypes.ITEM, stack),
-                feedPos.x, feedPos.y, feedPos.z,
-                0, 0, 0);
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(
+                    new ItemParticleOption(ParticleTypes.ITEM, stack),
+                    feedPos.x, feedPos.y, feedPos.z,
+                    1, 0, 0, 0, 0.0);
+        } else {
+            level.addParticle(
+                    new ItemParticleOption(ParticleTypes.ITEM, stack),
+                    feedPos.x, feedPos.y, feedPos.z,
+                    0, 0, 0);
+        }
         return true;
     }
 
