@@ -76,6 +76,7 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
             chicken.setLeashedTo(player, true);
             level.addFreshEntity(chicken);
             level.setBlockAndUpdate(pos, empty.get().withPropertiesOf(state));
+            if (!player.getAbilities().instabuild) stack.shrink(1);
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 

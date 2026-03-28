@@ -82,6 +82,7 @@ public class DuckRoostBlock extends RoostBlock implements IBE<DuckRoostBlockEnti
             duck.setLeashedTo(player, true);
             level.addFreshEntity(duck);
             level.setBlockAndUpdate(pos, empty.get().withPropertiesOf(state));
+            if (!player.getAbilities().instabuild) stack.shrink(1);
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
