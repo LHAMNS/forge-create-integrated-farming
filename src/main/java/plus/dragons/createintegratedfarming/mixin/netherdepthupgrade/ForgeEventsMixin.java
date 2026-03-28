@@ -34,7 +34,7 @@ import plus.dragons.createintegratedfarming.integration.ModIntegration.Mods;
 @Restriction(require = @Condition(Mods.NETHER_DEPTHS_UPGRADE))
 @Mixin(targets = "com.scouter.netherdepthsupgrade.events.ForgeEvents")
 public class ForgeEventsMixin {
-    @Inject(method = "changeFish", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;"), cancellable = true)
+    @Inject(method = "changeFish", remap = false, at = @At(value = "INVOKE", remap = true, target = "Lnet/minecraft/world/entity/player/Player;getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;"), cancellable = true)
     private static void createintegratedfarming$noFishingEntitiesForFishingNet(ItemFishedEvent event, CallbackInfo ci, @Nullable @Local Player player) {
         if (player == null || player instanceof FishingNetFakePlayer)
             ci.cancel();
