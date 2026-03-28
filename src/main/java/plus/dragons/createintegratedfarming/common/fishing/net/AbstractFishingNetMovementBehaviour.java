@@ -34,6 +34,8 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
@@ -87,7 +89,9 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
                 fishing.timeUntilCatch--;
             if ((level.getGameTime() + context.hashCode()) % 20 == 0 && CIFConfig.server().fishingNetCaptureCreatureInWater.get()) {
                 this.cachedMaxSize = (float) CIFConfig.server().fishingNetCapturedCreatureMaxSize.get().doubleValue();
-                AABB area = context.state.getShape(level, context.localPos).bounds()
+                VoxelShape shape = context.state.getShape(level, context.localPos);
+                if (shape.isEmpty()) return;
+                AABB area = shape.bounds()
                         .expandTowards(context.motion.scale(5))
                         .move(context.position)
                         .inflate(0.2);
