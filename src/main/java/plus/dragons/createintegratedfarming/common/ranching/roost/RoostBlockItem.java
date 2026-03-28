@@ -81,7 +81,7 @@ public class RoostBlockItem extends BlockItem {
                 InteractionResult result = capturable.captureItem(level, context.getItemInHand(), context.getHand(), player, entity);
                 if (result.consumesAction()) {
                     // Consume the spawner: replace with an empty spawner (reset spawn data)
-                    spawnerBE.getSpawner().setEntityId(EntityType.PIG, level, level.random, pos);
+                    clearSpawner(spawnerBE, pos);
                 }
                 return result;
             }
@@ -98,7 +98,7 @@ public class RoostBlockItem extends BlockItem {
                     if (entity != null) {
                         InteractionResult result = capturable.captureItem(level, context.getItemInHand(), context.getHand(), player, entity);
                         if (result.consumesAction()) {
-                            spawnerBE.getSpawner().setEntityId(EntityType.PIG, level, level.random, pos);
+                            clearSpawner(spawnerBE, pos);
                         }
                         return result;
                     }
@@ -106,5 +106,17 @@ public class RoostBlockItem extends BlockItem {
             }
         }
         return super.useOn(context);
+    }
+
+    /**
+     * Clears a spawner by removing SpawnData and SpawnPotentials via NBT,
+     * since BaseSpawner has no clear() method in Forge 1.20.1.
+     */
+    private static void clearSpawner(SpawnerBlockEntity spawnerBE, BlockPos pos) {
+        CompoundTag tag = spawnerBE.saveWithoutMetadata();
+        tag.remove("SpawnData");
+        tag.remove("SpawnPotentials");
+        spawnerBE.load(tag);
+        spawnerBE.setChanged();
     }
 }
