@@ -47,7 +47,9 @@ public class EnchantableSawMovementBehaviourMixin extends SawMovementBehaviour {
         var level = context.world;
         var state = level.getBlockState(pos);
         if (state.is(SawableBlockTags.FRAGILE_VERTICAL_PLANTS)) {
-            TreeCutter.findTree(context.world, pos, state).destroyBlocks(level, enchantedTools.get(context), null,
+            var tool = enchantedTools.get(context);
+            if (tool == null) tool = ItemStack.EMPTY;
+            TreeCutter.findTree(context.world, pos, state).destroyBlocks(level, tool, null,
                     (dropPos, stack) -> this.dropItemFromCutTree(context, dropPos, stack));
         }
     }

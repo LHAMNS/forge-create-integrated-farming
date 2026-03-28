@@ -96,7 +96,7 @@ public class MushroomColonyHarvestBehaviour implements CustomHarvestBehaviour {
         if (!CustomHarvestBehaviour.replant())
             return;
         Level level = context.world;
-        BlockState newState = mushroom.defaultBlockState();
+        BlockState newState = colony.defaultBlockState();
         if (!newState.canSurvive(level, pos))
             return;
         ItemStack available = ItemHelper.extract(
