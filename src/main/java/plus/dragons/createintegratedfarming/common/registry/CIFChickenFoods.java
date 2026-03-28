@@ -188,9 +188,18 @@ public class CIFChickenFoods {
             newFluidFoods = new HashMap<>(current.fluids());
         }
 
+        // If both maps are empty and we have existing data, preserve defaults.
+        // This prevents accidental wipe when all JSON entries are condition-skipped.
+        // Callers that intentionally want to clear should use the explicitReplace mechanism.
+        if (newItemFoods.isEmpty() && newFluidFoods.isEmpty() && !current.items().isEmpty()) {
+            LOGGER.debug("[CIFChickenFoods] reload() received empty maps, preserving existing {} item(s) and {} fluid(s)",
+                    current.items().size(), current.fluids().size());
+            tagFallbackCache.clear();
+            return;
+        }
+
         // Defensively copy incoming maps to decouple from caller's references.
         // Then atomically replace both maps with a single volatile write.
-        // This ensures readers always see a consistent pair of item + fluid maps.
         foodMaps = new FoodMaps(
                 Collections.unmodifiableMap(new HashMap<>(newItemFoods)),
                 Collections.unmodifiableMap(new HashMap<>(newFluidFoods)));

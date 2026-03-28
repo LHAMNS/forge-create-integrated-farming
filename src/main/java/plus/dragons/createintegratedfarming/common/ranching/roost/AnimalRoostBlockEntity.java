@@ -34,6 +34,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -185,6 +186,10 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
                 for (var stack : lootStacks) {
                     ItemStack remainder = ItemHandlerHelper.insertItem(inventory, stack, false);
                     inserted |= stack.getCount() != remainder.getCount();
+                    // Drop any remainder that couldn't fit in the inventory
+                    if (!remainder.isEmpty()) {
+                        Block.popResource(serverLevel, worldPosition, remainder);
+                    }
                 }
                 if (inserted) {
                     int cooldown = productionCooldown();

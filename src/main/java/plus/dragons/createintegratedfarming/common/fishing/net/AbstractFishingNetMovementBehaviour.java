@@ -57,6 +57,11 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
             return false;
         if (entity.isBaby())
             return false;
+        // Don't capture named or leashed entities — they belong to a player
+        if (entity.hasCustomName())
+            return false;
+        if (entity instanceof Mob mob && mob.isLeashed())
+            return false;
         if (entity instanceof WaterAnimal) {
             var dimensions = entity.getDimensions(Pose.SWIMMING);
             return dimensions.height < cachedMaxSize && dimensions.width < cachedMaxSize;
