@@ -185,9 +185,11 @@ public class CIFChickenFoods {
         // If no JSON files exist at all, the reload listener won't call reload(),
         // so the hardcoded defaults from register() remain in effect.
 
-        // Atomically replace both maps with unmodifiable snapshots
-        itemFoods = Collections.unmodifiableMap(new HashMap<>(newItemFoods));
-        fluidFoods = Collections.unmodifiableMap(new HashMap<>(newFluidFoods));
+        // Atomically replace both maps with unmodifiable views.
+        // The caller (ChickenFoodReloadListener) passes freshly built HashMaps that are
+        // not retained, so we wrap them directly without a defensive copy.
+        itemFoods = Collections.unmodifiableMap(newItemFoods);
+        fluidFoods = Collections.unmodifiableMap(newFluidFoods);
         tagFallbackCache.clear(); // Invalidate tag fallback cache since data may have changed
 
         LOGGER.debug("[CIFChickenFoods] Reloaded: {} item food(s), {} fluid food(s)",

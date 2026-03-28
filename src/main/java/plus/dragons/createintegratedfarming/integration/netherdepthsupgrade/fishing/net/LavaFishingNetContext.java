@@ -29,6 +29,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import plus.dragons.createintegratedfarming.common.fishing.net.AbstractFishingNetContext;
+import plus.dragons.createintegratedfarming.config.CIFConfig;
 import plus.dragons.createintegratedfarming.mixin.netherdepthupgrade.LavaFishingBobberEntityInvoker;
 
 public class LavaFishingNetContext extends AbstractFishingNetContext<LavaFishingBobberEntity> {
@@ -55,8 +56,14 @@ public class LavaFishingNetContext extends AbstractFishingNetContext<LavaFishing
         return lootData.getLootTable(NDULootTables.LAVA_FISHING);
     }
 
+    @Override
     public LootParams buildFishingLootContext(MovementContext context, ServerLevel level, BlockPos pos) {
-        fishingHook.openWater = ((LavaFishingBobberEntityInvoker) fishingHook).invokeCalculateOpenLava(pos);
+        // Upstream bug fix: respect fishingNetChecksOpenWater config like water fishing net does
+        if (CIFConfig.server().fishingNetChecksOpenWater.get()) {
+            fishingHook.openWater = ((LavaFishingBobberEntityInvoker) fishingHook).invokeCalculateOpenLava(pos);
+        } else {
+            fishingHook.openWater = false;
+        }
         return super.buildFishingLootContext(context, level, pos);
     }
 }

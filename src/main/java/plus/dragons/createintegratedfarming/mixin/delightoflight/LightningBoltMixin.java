@@ -48,13 +48,14 @@ public abstract class LightningBoltMixin extends Entity {
     private void injected(CallbackInfo ci) {
         BlockPos blockpos = this.getStrikePosition();
         BlockPos below = blockpos.below();
+        Level world = this.level;
         BlockPos[] roll = { below, below.east(), below.west(), below.north(), below.south() };
         for (var pos : roll) {
-            var state = level().getBlockState(pos);
+            var state = world.getBlockState(pos);
             if (state.is(Blocks.DIRT) || state.is(Blocks.GRASS_BLOCK)) {
-                level().setBlockAndUpdate(pos, DFBlocks.WEATHER_SOIL.get().defaultBlockState());
+                world.setBlockAndUpdate(pos, DFBlocks.WEATHER_SOIL.get().defaultBlockState());
             } else if (state.is(Blocks.DIRT_PATH) || state.is(Blocks.FARMLAND)) {
-                level().setBlockAndUpdate(pos, DFBlocks.WEATHER_SOIL_FARMLAND.get().defaultBlockState());
+                world.setBlockAndUpdate(pos, DFBlocks.WEATHER_SOIL_FARMLAND.get().defaultBlockState());
             }
         }
     }

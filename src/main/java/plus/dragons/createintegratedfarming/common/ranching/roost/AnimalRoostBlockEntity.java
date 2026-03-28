@@ -58,6 +58,8 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
     protected LazyOptional<IItemHandler> outputCapability;
     protected int feedCooldown;
     protected int eggTime = productionCooldown();
+    /** Cached center position to avoid repeated Vec3 allocation in lazyTick. */
+    protected Vec3 centerPos;
 
     public int productionCooldown() {
         return 12000;
@@ -68,6 +70,7 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
     public AnimalRoostBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         setLazyTickRate(20);
+        this.centerPos = Vec3.atCenterOf(pos);
         this.inventory = new ItemStackHandler(CIFConfig.server().roostingInventorySlotCount.get()) {
             @Override
             public int getSlotLimit(int slot) {
@@ -140,26 +143,44 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
                 changed = true;
         }
         if (eggTime <= 0) {
-            boolean inserted = false;
-            ResourceLocation lootTableId = productionLootTable();
-            LootTable lootTable = serverLevel.getServer().getLootData().getLootTable(lootTableId);
-            LootParams lootParams = new LootParams.Builder(serverLevel)
-                    .withParameter(LootContextParams.BLOCK_STATE, getBlockState())
-                    .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(worldPosition))
-                    .withParameter(LootContextParams.TOOL, ItemStack.EMPTY)
-                    .withOptionalParameter(LootContextParams.BLOCK_ENTITY, this)
-                    .create(LootContextParamSets.BLOCK);
-            var lootStacks = lootTable.getRandomItems(lootParams);
-            for (var stack : lootStacks) {
-                ItemStack remainder = ItemHandlerHelper.insertItem(inventory, stack, false);
-                inserted |= stack.getCount() != remainder.getCount();
+            // Performance: cheap capacity check before rolling loot table
+            boolean hasSpace = false;
+            for (int i = 0; i < inventory.getSlots(); i++) {
+                if (inventory.getStackInSlot(i).getCount() < inventory.getSlotLimit(i)) {
+                    hasSpace = true;
+                    break;
+                }
             }
-            if (inserted) {
-                eggTime = 6000 + level.random.nextInt(6000);
-                level.playSound(
-                        null, worldPosition, SoundEvents.CHICKEN_EGG, SoundSource.BLOCKS,
-                        1.0F, (level.random.nextFloat() - level.random.nextFloat()) * 0.2F + 1.0F);
+            if (!hasSpace) {
+                eggTime = 200; // Retry in 10 seconds
                 changed = true;
+            } else {
+                boolean inserted = false;
+                ResourceLocation lootTableId = productionLootTable();
+                LootTable lootTable = serverLevel.getServer().getLootData().getLootTable(lootTableId);
+                LootParams lootParams = new LootParams.Builder(serverLevel)
+                        .withParameter(LootContextParams.BLOCK_STATE, getBlockState())
+                        .withParameter(LootContextParams.ORIGIN, centerPos)
+                        .withParameter(LootContextParams.TOOL, ItemStack.EMPTY)
+                        .withOptionalParameter(LootContextParams.BLOCK_ENTITY, this)
+                        .create(LootContextParamSets.BLOCK);
+                var lootStacks = lootTable.getRandomItems(lootParams);
+                for (var stack : lootStacks) {
+                    ItemStack remainder = ItemHandlerHelper.insertItem(inventory, stack, false);
+                    inserted |= stack.getCount() != remainder.getCount();
+                }
+                if (inserted) {
+                    int cooldown = productionCooldown();
+                    eggTime = cooldown / 2 + level.random.nextInt(cooldown / 2);
+                    level.playSound(
+                            null, worldPosition, SoundEvents.CHICKEN_EGG, SoundSource.BLOCKS,
+                            1.0F, (level.random.nextFloat() - level.random.nextFloat()) * 0.2F + 1.0F);
+                    changed = true;
+                } else {
+                    // Inventory full after loot roll: retry in 10 seconds
+                    eggTime = 200;
+                    changed = true;
+                }
             }
         }
         if (changed)
@@ -178,7 +199,8 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);
         inventory.deserializeNBT(tag.getCompound("Inventory"));
-        eggTime = Mth.clamp(tag.getInt("EggLayTime"), 0, 12000);
+        // Bug fix: use productionCooldown() instead of hardcoded 12000
+        eggTime = Mth.clamp(tag.getInt("EggLayTime"), 0, productionCooldown());
         feedCooldown = tag.getInt("FeedCooldown");
     }
 

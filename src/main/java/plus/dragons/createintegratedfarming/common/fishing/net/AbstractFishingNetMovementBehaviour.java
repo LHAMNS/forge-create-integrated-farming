@@ -42,13 +42,15 @@ import plus.dragons.createintegratedfarming.config.CIFConfig;
 public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFishingNetContext<?>> implements MovementBehaviour {
     protected abstract T getFishingNetContext(MovementContext context, ServerLevel level);
 
+    /** Cached max size for entity capture, set before each entity scan in tick(). */
+    protected float cachedMaxSize;
+
     protected boolean canCaptureEntity(LivingEntity entity) {
         if (entity instanceof Enemy)
             return false;
         if (entity instanceof WaterAnimal) {
             var dimensions = entity.getDimensions(Pose.SWIMMING);
-            float maxSize = (float) CIFConfig.server().fishingNetCapturedCreatureMaxSize.get().doubleValue();
-            return dimensions.height < maxSize && dimensions.width < maxSize;
+            return dimensions.height < cachedMaxSize && dimensions.width < cachedMaxSize;
         }
         return false;
     }
@@ -65,7 +67,10 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
                 if (entity instanceof Mob mob) {
                     experience = ForgeEventFactory.getExperienceDrop(entity, fishing.player, mob.getExperienceReward());
                 }
-                dropItem(context, new ItemStack(AllItems.EXP_NUGGET.get(), (experience + 2) / 3));
+                int nuggetCount = (experience + 2) / 3;
+                if (nuggetCount > 0) {
+                    dropItem(context, new ItemStack(AllItems.EXP_NUGGET.get(), nuggetCount));
+                }
             }
         }
         entity.discard();
@@ -78,6 +83,7 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
             if (fishing.timeUntilCatch > 0)
                 fishing.timeUntilCatch--;
             if ((level.getGameTime() + context.hashCode()) % 20 == 0 && CIFConfig.server().fishingNetCaptureCreatureInWater.get()) {
+                this.cachedMaxSize = (float) CIFConfig.server().fishingNetCapturedCreatureMaxSize.get().doubleValue();
                 AABB area = context.state.getShape(level, context.localPos).bounds()
                         .expandTowards(context.motion.scale(5))
                         .move(context.position)

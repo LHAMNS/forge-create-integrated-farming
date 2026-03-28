@@ -31,14 +31,19 @@ import org.jetbrains.annotations.Nullable;
 import plus.dragons.createintegratedfarming.common.ranching.roost.AnimalRoostBlockEntity;
 
 public class AnimalRoostArmInteractionPoint extends ArmInteractionPoint {
+    /** Pre-computed interaction position to avoid repeated Vec3 allocation. */
+    private final Vec3 cachedInteractionPos;
+
     public AnimalRoostArmInteractionPoint(ArmInteractionPointType type, Level level, BlockPos pos, BlockState state) {
         super(type, level, pos, state);
+        Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
+        this.cachedInteractionPos = Vec3.atBottomCenterOf(pos)
+                .add(facing.getStepX() * .5f, 13 / 16f, facing.getStepZ() * .5f);
     }
 
     @Override
     protected Vec3 getInteractionPositionVector() {
-        Direction facing = cachedState.getValue(HorizontalDirectionalBlock.FACING);
-        return Vec3.atBottomCenterOf(pos).add(facing.getStepX() * .5f, 13 / 16f, facing.getStepZ() * .5f);
+        return cachedInteractionPos;
     }
 
     @Override

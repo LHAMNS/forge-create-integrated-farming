@@ -44,6 +44,21 @@ public class UntitledDuckBlockEntities {
                     UntitledDuckBlocks.GOOSE_ROOST_UNTITLED)
             .register();
 
+    /**
+     * Forces class loading to trigger Registrate block entity registration.
+     * <p>
+     * Note on capabilities: Unlike NeoForge where {@code RegisterCapabilitiesEvent}
+     * requires explicit capability registration per block entity type, Forge 1.20.1
+     * capabilities are exposed via {@code getCapability()} override in the block entity
+     * class itself. Both {@link DuckRoostBlockEntity} and {@link GooseRoostBlockEntity}
+     * inherit full IItemHandler capability support from their parent class
+     * {@link plus.dragons.createintegratedfarming.common.ranching.roost.AnimalRoostBlockEntity},
+     * which implements {@code getCapability()}, {@code invalidateCaps()}, and proper
+     * {@code LazyOptional} lifecycle management.
+     * <p>
+     * This means hoppers, pipes, and other automation can extract items from
+     * duck/goose roosts without any additional capability registration here.
+     */
     public static void register() {
         // Force class loading
     }

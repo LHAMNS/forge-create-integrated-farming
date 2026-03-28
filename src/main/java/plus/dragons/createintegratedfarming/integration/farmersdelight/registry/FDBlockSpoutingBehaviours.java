@@ -40,6 +40,8 @@ public class FDBlockSpoutingBehaviours {
             return 0;
         if (!simulate && level instanceof ServerLevel) {
             BlockState state = level.getBlockState(pos);
+            // Upstream bug fix: verify block is still organic compost before ticking
+            if (!state.is(ModBlocks.ORGANIC_COMPOST.get())) return 0;
             state.randomTick((ServerLevel) level, pos, level.random);
         }
         return 250;

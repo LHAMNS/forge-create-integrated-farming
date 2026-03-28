@@ -81,6 +81,7 @@ public class MushroomColonyHarvestBehaviour implements CustomHarvestBehaviour {
         int age = state.getValue(colony.getAgeProperty());
         if (age < colony.getMaxAge() && !CustomHarvestBehaviour.partial())
             return;
+        if (age == 0) return; // Upstream bug fix: don't destroy empty colony
         BlockHelper.destroyBlockAs(
                 context.world,
                 pos,

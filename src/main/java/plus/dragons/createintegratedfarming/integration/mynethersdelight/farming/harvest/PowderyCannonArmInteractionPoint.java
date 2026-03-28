@@ -31,6 +31,11 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.Nullable;
 
 public class PowderyCannonArmInteractionPoint extends ArmInteractionPoint {
+    // Upstream bug fix: cache the random count between simulate and real extraction.
+    // Without caching, simulate might return 2 peppers but real extraction returns 1,
+    // causing the arm to get stuck with a leftover pepper it can't place anywhere.
+    private int cachedExtractCount = -1;
+
     public PowderyCannonArmInteractionPoint(ArmInteractionPointType type, Level level, BlockPos pos, BlockState state) {
         super(type, level, pos, state);
     }
@@ -44,13 +49,26 @@ public class PowderyCannonArmInteractionPoint extends ArmInteractionPoint {
     public ItemStack extract(int slot, int amount, boolean simulate) {
         BlockState state = level.getBlockState(pos);
         if ((state.getBlock() instanceof PowderyCaneBlock || state.getBlock() instanceof PowderyCannonBlock) && state.getValue(BlockStateProperties.LIT)) {
-            if (!simulate) {
+            // Determine count: use cached value if available, otherwise roll new random
+            int j;
+            if (cachedExtractCount > 0) {
+                j = cachedExtractCount;
+            } else {
+                j = 1 + level.random.nextInt(2);
+            }
+
+            if (simulate) {
+                // Cache for the real extraction that follows
+                cachedExtractCount = j;
+            } else {
+                // Reset cache and perform the actual block state change
+                cachedExtractCount = -1;
                 state = state.setValue(BlockStateProperties.LIT, false);
                 level.setBlockAndUpdate(pos, state);
             }
-            int j = 1 + level.random.nextInt(2);
             return new ItemStack(MNDItems.BULLET_PEPPER.get(), j);
         }
+        cachedExtractCount = -1;
         return ItemStack.EMPTY;
     }
 

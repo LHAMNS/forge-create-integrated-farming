@@ -19,8 +19,7 @@
 package plus.dragons.createintegratedfarming.common.fishing.net;
 
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
-import java.util.HashSet;
-import java.util.Set;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -45,7 +44,11 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
     protected final int maxRecordedBlocks;
     /** Cached config value: cooldown multiplier for fishing. Read once at construction. */
     protected final int cooldownMultiplier;
-    protected final Set<BlockPos> visitedBlocks;
+    /** Cached enchantment value: lure speed reduction in ticks (lureLevel * 100). Read once at construction. */
+    private final int lureSpeed;
+    /** Cached enchantment value: luck of the sea level. Read once at construction. */
+    private final int luckLevel;
+    private final LongOpenHashSet visitedBlocks;
     public int timeUntilCatch;
 
     public AbstractFishingNetContext(ServerLevel level, ItemStack fishingRod) {
@@ -57,7 +60,11 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
         // Cache config values once at construction to avoid per-tick config reads
         this.maxRecordedBlocks = CIFConfig.server().fishingNetMaxRecordedBlocks.get();
         this.cooldownMultiplier = CIFConfig.server().fishingNetCooldownMultiplier.get();
-        this.visitedBlocks = new HashSet<>(Math.min(16, maxRecordedBlocks));
+        // Cache enchantment-derived constants to avoid repeated EnchantmentHelper lookups
+        int lureLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FISHING_SPEED, fishingRod);
+        this.lureSpeed = lureLevel * 100;
+        this.luckLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FISHING_LUCK, fishingRod);
+        this.visitedBlocks = new LongOpenHashSet(Math.min(16, maxRecordedBlocks));
         this.reset(level);
     }
 
@@ -81,16 +88,14 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
 
     public void reset(ServerLevel level) {
         this.visitedBlocks.clear();
-        // In 1.20.1, Lure enchantment reduces wait time by 5 seconds per level
-        int lureLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FISHING_SPEED, fishingRod);
-        int lureSpeed = lureLevel * 100; // 5 seconds * 20 ticks per level
-        this.timeUntilCatch = (Mth.nextInt(random, 100, 600) - lureSpeed) * cooldownMultiplier;
+        // Fix: clamp minimum cooldown to 20 ticks (1 second) to prevent negative values from high Lure levels
+        this.timeUntilCatch = Math.max(20, (Mth.nextInt(random, 100, 600) - lureSpeed) * cooldownMultiplier);
     }
 
     public boolean visitNewPositon(ServerLevel level, BlockPos pos) {
         if (isPosValidForFishing(level, pos)) {
             if (visitedBlocks.size() < maxRecordedBlocks)
-                visitedBlocks.add(pos);
+                visitedBlocks.add(pos.asLong());
             return true;
         }
         return false;
@@ -111,7 +116,6 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
     public LootParams buildFishingLootContext(MovementContext context, ServerLevel level, BlockPos pos) {
         fishingHook.setPos(context.position);
         player.setPos(context.position);
-        int luckLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FISHING_LUCK, fishingRod);
         return new LootParams.Builder(level)
                 .withParameter(LootContextParams.ORIGIN, context.position)
                 .withParameter(LootContextParams.TOOL, fishingRod)

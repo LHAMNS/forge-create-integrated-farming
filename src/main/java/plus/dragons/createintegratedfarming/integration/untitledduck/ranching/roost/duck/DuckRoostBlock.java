@@ -61,6 +61,8 @@ public class DuckRoostBlock extends RoostBlock implements IBE<DuckRoostBlockEnti
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        // Upstream bug fix: spectators should not interact with roost blocks
+        if (player.isSpectator()) return InteractionResult.PASS;
         ItemStack stack = player.getItemInHand(hand);
 
         // First check leashed entity capture from parent RoostBlock
@@ -70,6 +72,11 @@ public class DuckRoostBlock extends RoostBlock implements IBE<DuckRoostBlockEnti
 
         // Lead extraction: use lead to extract the duck
         if (stack.is(Items.LEAD)) {
+            // Upstream bug fix: prevent client-side execution creating ghost entities
+            if (level.isClientSide) return InteractionResult.SUCCESS;
+            // Upstream bug fix: re-validate block state to prevent race condition duplication
+            BlockState currentState = level.getBlockState(pos);
+            if (!currentState.is(this)) return InteractionResult.PASS;
             DuckEntity duck = duckVariant(level);
             duck.setPos(pos.getCenter());
             duck.setLeashedTo(player, true);
@@ -196,6 +203,8 @@ public class DuckRoostBlock extends RoostBlock implements IBE<DuckRoostBlockEnti
             if (state.getBlock() instanceof DuckRoostBlock)
                 return InteractionResult.PASS;
             if (entity instanceof DuckEntity duck && !duck.isBaby()) {
+                // Upstream bug fix: prevent client-side execution of capture logic
+                if (level.isClientSide) return InteractionResult.SUCCESS;
                 level.setBlockAndUpdate(pos, withVariantPropertiesOf(state, duck));
                 duck.playSound(ModSoundEvents.DUCK_HURT.get());
                 duck.discard();

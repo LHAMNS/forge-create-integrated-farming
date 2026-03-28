@@ -57,6 +57,9 @@ public class RoostBlockItem extends BlockItem {
         if (!(blockEntity instanceof SpawnerBlockEntity spawnerBE))
             return super.useOn(context);
 
+        // Upstream bug fix: prevent client-side execution of spawner capture logic
+        if (level.isClientSide) return InteractionResult.sidedSuccess(true);
+
         // Extract entity types from spawner via NBT since fields are not accessible in Forge 1.20.1
         CompoundTag spawnerTag = spawnerBE.saveWithoutMetadata();
         // Try SpawnPotentials first (list of weighted spawn entries)

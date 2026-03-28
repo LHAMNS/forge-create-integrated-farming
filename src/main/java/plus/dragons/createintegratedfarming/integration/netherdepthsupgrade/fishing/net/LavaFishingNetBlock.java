@@ -90,6 +90,7 @@ public class LavaFishingNetBlock extends WrenchableDirectionalBlock implements W
 
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (state.getValue(FLUID) == ContainedFluid.EMPTY) return;
         if (entity instanceof Enemy)
             return;
         if (entity instanceof WaterAnimal || entity instanceof LavaAnimal) {

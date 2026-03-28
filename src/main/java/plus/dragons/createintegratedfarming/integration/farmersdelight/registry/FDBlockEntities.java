@@ -56,10 +56,20 @@ public class FDBlockEntities {
 
     private static void onAttachCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
         if (event.getObject() instanceof BasketBlockEntity basket) {
-            event.addCapability(BASKET_BEHAVIOUR_CAP, new BasketBehaviourCapProvider(basket));
+            var provider = new BasketBehaviourCapProvider(basket);
+            event.addCapability(BASKET_BEHAVIOUR_CAP, provider);
+            // Register invalidation: when the BlockEntity's capabilities are invalidated
+            // (chunk unload, block removal), our LazyOptional is also invalidated to
+            // prevent memory leaks from dangling references.
+            event.addListener(provider::invalidate);
         }
     }
 
+    /**
+     * Capability provider with proper lifecycle management.
+     * The {@link #invalidate()} method is called when the parent BlockEntity
+     * is removed/unloaded, ensuring the LazyOptional is cleaned up.
+     */
     private static class BasketBehaviourCapProvider implements ICapabilityProvider {
         private final BasketBlockEntity basket;
         private LazyOptional<BehaviourProvider> lazy;
@@ -69,9 +79,16 @@ public class FDBlockEntities {
             this.lazy = LazyOptional.of(() -> new BasketBehaviourProvider(basket));
         }
 
+        void invalidate() {
+            if (lazy != null) {
+                lazy.invalidate();
+                lazy = null;
+            }
+        }
+
         @Override
         public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-            if (cap == CDPCapabilities.BEHAVIOUR_PROVIDER) {
+            if (cap == CDPCapabilities.BEHAVIOUR_PROVIDER && lazy != null) {
                 return lazy.cast();
             }
             return LazyOptional.empty();

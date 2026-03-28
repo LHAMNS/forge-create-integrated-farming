@@ -24,6 +24,7 @@ import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import com.simibubi.create.foundation.utility.BlockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.mutable.MutableBoolean;
@@ -50,16 +51,27 @@ public class HighCropHarvestBehaviour implements CustomHarvestBehaviour {
         int age = crop.getAge(state);
         if (age < crop.getMaxAge() && !CustomHarvestBehaviour.partial())
             return;
+        ItemStack harvestTool = CustomHarvestBehaviour.getHarvestTool(context);
         if (replant) {
             int growUpperAge = crop.getGrowUpperAge();
             if (age < growUpperAge)
                 return;
+            // Upstream bug fix: clear upper parts before replanting lower part
+            BlockPos above = pos.above();
+            BlockState aboveState = level.getBlockState(above);
+            while (aboveState.is(crop)) {
+                BlockHelper.destroyBlockAs(level, above, null, harvestTool, 1,
+                        stack -> behaviour.dropItem(context, stack));
+                above = above.above();
+                aboveState = level.getBlockState(above);
+            }
             MutableBoolean seedSubtracted = new MutableBoolean(false);
             CustomHarvestBehaviour.harvestBlock(
                     level, pos,
-                    crop.getStateForAge(growUpperAge).setValue(HighCropBlock.UPPER, state.getValue(HighCropBlock.UPPER)),
+                    // Upstream bug fix: UPPER should be reset to false after replanting
+                    crop.getStateForAge(growUpperAge).setValue(HighCropBlock.UPPER, false),
                     null,
-                    CustomHarvestBehaviour.getHarvestTool(context),
+                    harvestTool,
                     1,
                     stack -> {
                         if (!seedSubtracted.getValue() && stack.is(crop.asItem())) {
@@ -69,23 +81,31 @@ public class HighCropHarvestBehaviour implements CustomHarvestBehaviour {
                         behaviour.dropItem(context, stack);
                     });
         } else {
-            destroy(level, behaviour, context, pos, state);
+            destroy(level, behaviour, context, pos, state, harvestTool);
         }
     }
 
-    protected void destroy(Level level, HarvesterMovementBehaviour behaviour, MovementContext context, BlockPos pos, BlockState state) {
-        boolean upper = state.getValue(HighCropBlock.UPPER);
-        if (upper) {
-            BlockPos abovePos = pos.above();
-            BlockState aboveState = level.getBlockState(abovePos);
-            if (aboveState.is(crop))
-                destroy(level, behaviour, context, abovePos, aboveState);
+    /**
+     * Destroys a high crop block and all connected parts above it.
+     * <p>
+     * Upstream bug fix: the original only checked upward when {@code UPPER=true},
+     * meaning if the harvester hit the lower half, the upper half would be left
+     * floating. This fix always checks upward regardless of the current block's
+     * UPPER state, ensuring the entire plant is harvested as a unit.
+     */
+    protected void destroy(Level level, HarvesterMovementBehaviour behaviour, MovementContext context, BlockPos pos, BlockState state, ItemStack harvestTool) {
+        // Always check and destroy any connected crop blocks above, regardless of
+        // whether the current block is the upper or lower part.
+        BlockPos abovePos = pos.above();
+        BlockState aboveState = level.getBlockState(abovePos);
+        if (aboveState.is(crop)) {
+            destroy(level, behaviour, context, abovePos, aboveState, harvestTool);
         }
         BlockHelper.destroyBlockAs(
                 level,
                 pos,
                 null,
-                CustomHarvestBehaviour.getHarvestTool(context),
+                harvestTool,
                 1,
                 stack -> behaviour.dropItem(context, stack));
     }

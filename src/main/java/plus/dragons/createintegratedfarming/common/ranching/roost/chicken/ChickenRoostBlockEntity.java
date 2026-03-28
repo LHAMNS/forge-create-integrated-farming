@@ -18,6 +18,7 @@
 
 package plus.dragons.createintegratedfarming.common.ranching.roost.chicken;
 
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ItemParticleOption;
@@ -60,8 +61,10 @@ public class ChickenRoostBlockEntity extends AnimalRoostBlockEntity {
         Direction facing = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
         Vec3 feedPos = Vec3.atBottomCenterOf(worldPosition)
                 .add(facing.getStepX() * .5f, 13 / 16f, facing.getStepZ() * .5f);
-        food.usingConvertsTo().ifPresent(remainder -> Containers.dropItemStack(
-                level, feedPos.x, feedPos.y, feedPos.z, remainder.copy()));
+        Optional<ItemStack> convertsTo = food.usingConvertsTo();
+        if (convertsTo.isPresent()) {
+            Containers.dropItemStack(level, feedPos.x, feedPos.y, feedPos.z, convertsTo.get().copy());
+        }
         level.addParticle(
                 new ItemParticleOption(ParticleTypes.ITEM, stack),
                 feedPos.x, feedPos.y, feedPos.z,
@@ -75,6 +78,8 @@ public class ChickenRoostBlockEntity extends AnimalRoostBlockEntity {
         var food = CIFChickenFoods.getFluidFood(fluid);
         if (food == null)
             return 0;
+        // Bug fix: check that the fluid actually has enough amount before consuming
+        if (fluid.getAmount() < food.amount()) return 0;
         if (simulate)
             return food.amount();
         feed(food);

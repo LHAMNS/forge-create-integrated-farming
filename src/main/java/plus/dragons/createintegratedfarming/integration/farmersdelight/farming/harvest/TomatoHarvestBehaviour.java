@@ -51,8 +51,10 @@ public class TomatoHarvestBehaviour implements CustomHarvestBehaviour {
         boolean mature = tomato.getAge(state) == tomato.getMaxAge();
         Level level = context.world;
         if (!replant) {
-            if (mature || partial)
-                breakTomatoes(level, behaviour, context, pos, state);
+            if (mature || partial) {
+                ItemStack harvestTool = CustomHarvestBehaviour.getHarvestTool(context);
+                breakTomatoes(level, behaviour, context, pos, state, harvestTool);
+            }
             return;
         }
         if (mature) {
@@ -64,17 +66,17 @@ public class TomatoHarvestBehaviour implements CustomHarvestBehaviour {
         }
     }
 
-    protected void breakTomatoes(Level level, HarvesterMovementBehaviour behaviour, MovementContext context, BlockPos pos, BlockState state) {
+    protected void breakTomatoes(Level level, HarvesterMovementBehaviour behaviour, MovementContext context, BlockPos pos, BlockState state, ItemStack harvestTool) {
         BlockPos above = pos.above();
         BlockState stateAbove = level.getBlockState(above);
         if (stateAbove.is(tomato))
-            breakTomatoes(level, behaviour, context, above, stateAbove);
+            breakTomatoes(level, behaviour, context, above, stateAbove, harvestTool);
         boolean ropelogged = state.getValue(TomatoVineBlock.ROPELOGGED);
         BlockHelper.destroyBlockAs(
                 level,
                 pos,
                 null,
-                CustomHarvestBehaviour.getHarvestTool(context),
+                harvestTool,
                 1,
                 stack -> behaviour.dropItem(context, stack));
         if (ropelogged)

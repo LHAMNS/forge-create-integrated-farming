@@ -84,6 +84,7 @@ public class FishingNetBlock extends WrenchableDirectionalBlock implements Prope
 
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (!state.getValue(WATERLOGGED)) return;
         if (entity instanceof Enemy)
             return;
         if (entity instanceof WaterAnimal) {

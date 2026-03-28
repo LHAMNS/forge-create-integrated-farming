@@ -61,6 +61,8 @@ public class GooseRoostBlock extends RoostBlock implements IBE<GooseRoostBlockEn
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        // Upstream bug fix: spectators should not interact with roost blocks
+        if (player.isSpectator()) return InteractionResult.PASS;
         ItemStack stack = player.getItemInHand(hand);
 
         // First check leashed entity capture from parent RoostBlock
@@ -70,6 +72,11 @@ public class GooseRoostBlock extends RoostBlock implements IBE<GooseRoostBlockEn
 
         // Lead extraction: use lead to extract the goose
         if (stack.is(Items.LEAD)) {
+            // Upstream bug fix: prevent client-side execution creating ghost entities
+            if (level.isClientSide) return InteractionResult.SUCCESS;
+            // Upstream bug fix: re-validate block state to prevent race condition duplication
+            BlockState currentState = level.getBlockState(pos);
+            if (!currentState.is(this)) return InteractionResult.PASS;
             GooseEntity goose = gooseVariant(level);
             goose.setPos(pos.getCenter());
             goose.setLeashedTo(player, true);
@@ -135,8 +142,11 @@ public class GooseRoostBlock extends RoostBlock implements IBE<GooseRoostBlockEn
                 return UntitledDuckBlocks.GOOSE_ROOST_UNTITLED.get();
             }
         }
+        // Upstream bug fix: original used case 0b100 (=4), but GooseEntity.setVariant(1)
+        // stores variant=1 for Canadian goose. 0b100 never matches, causing Canadian
+        // geese to be misidentified as normal on round-trip (extract + recapture).
         return switch (goose.getVariant()) {
-            case 0b100 -> UntitledDuckBlocks.GOOSE_ROOST_CANADIAN.get();
+            case 1 -> UntitledDuckBlocks.GOOSE_ROOST_CANADIAN.get();
             default -> UntitledDuckBlocks.GOOSE_ROOST_NORMAL.get();
         };
     }
@@ -208,6 +218,8 @@ public class GooseRoostBlock extends RoostBlock implements IBE<GooseRoostBlockEn
             if (state.getBlock() instanceof GooseRoostBlock)
                 return InteractionResult.PASS;
             if (entity instanceof GooseEntity goose && !goose.isBaby()) {
+                // Upstream bug fix: prevent client-side execution of capture logic
+                if (level.isClientSide) return InteractionResult.SUCCESS;
                 level.setBlockAndUpdate(pos, withVariantPropertiesOf(state, goose));
                 goose.playSound(ModSoundEvents.GOOSE_HONK.get());
                 goose.discard();

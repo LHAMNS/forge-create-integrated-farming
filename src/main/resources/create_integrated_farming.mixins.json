@@ -15,6 +15,7 @@
     "createenchantablemachinery.EnchantableHarvesterMovementBehaviourMixin",
     "createenchantablemachinery.EnchantableSawMovementBehaviourMixin",
     "delightoflight.LightningBoltMixin",
+    "forge.ConditionalLootTableMixin",
     "netherdepthupgrade.ForgeEventsMixin",
     "netherdepthupgrade.LavaFishingBobberEntityInvoker"
   ],

@@ -56,6 +56,8 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        // Upstream bug fix: spectators should not interact with roost blocks
+        if (player.isSpectator()) return InteractionResult.PASS;
         ItemStack stack = player.getItemInHand(hand);
         // First check leashed entity capture from parent RoostBlock
         InteractionResult leashResult = super.use(state, level, pos, player, hand, hitResult);
@@ -64,6 +66,11 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
 
         // Lead extraction: use lead to extract the chicken
         if (stack.is(Items.LEAD)) {
+            // Upstream bug fix: prevent client-side execution creating ghost entities
+            if (level.isClientSide) return InteractionResult.SUCCESS;
+            // Upstream bug fix: re-validate block state to prevent race condition duplication
+            BlockState currentState = level.getBlockState(pos);
+            if (!currentState.is(this)) return InteractionResult.PASS;
             Chicken chicken = new Chicken(EntityType.CHICKEN, level);
             chicken.setPos(pos.getCenter());
             chicken.setLeashedTo(player, true);
@@ -150,6 +157,8 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
         if (state.is(this))
             return InteractionResult.PASS;
         if (entity instanceof Chicken chicken && !chicken.isBaby()) {
+            // Upstream bug fix: prevent client-side execution of capture logic
+            if (level.isClientSide) return InteractionResult.SUCCESS;
             level.setBlockAndUpdate(pos, this.withPropertiesOf(state));
             chicken.playSound(SoundEvents.CHICKEN_HURT);
             chicken.discard();
