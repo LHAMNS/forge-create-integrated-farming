@@ -82,8 +82,9 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
         // Try feeding with item in hand
         if (!stack.isEmpty()) {
             return onBlockEntityUse(level, pos, coop -> {
-                if (coop.feedItem(stack, false)) {
-                    if (!player.getAbilities().instabuild)
+                // Simulate on client to check if feeding is possible without modifying state
+                if (coop.feedItem(stack, level.isClientSide)) {
+                    if (!level.isClientSide && !player.getAbilities().instabuild)
                         stack.shrink(1);
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }
@@ -128,7 +129,8 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        IBE.onRemove(state, level, pos, newState);
+        if (!isMoving)
+            IBE.onRemove(state, level, pos, newState);
     }
 
     @Override
@@ -170,6 +172,8 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
     @Override
     public InteractionResult captureItem(Level level, ItemStack stack, InteractionHand hand, Player player, Entity entity) {
         if (entity instanceof Chicken chicken && !chicken.isBaby()) {
+            // Prevent client-side inventory manipulation to avoid desync in multiplayer
+            if (level.isClientSide) return InteractionResult.SUCCESS;
             if (player.getAbilities().instabuild)
                 player.getInventory().placeItemBackInInventory(new ItemStack(this));
             else {
@@ -181,7 +185,7 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
             }
             chicken.playSound(SoundEvents.CHICKEN_HURT);
             chicken.discard();
-            return InteractionResult.sidedSuccess(player.level().isClientSide);
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.PASS;
     }

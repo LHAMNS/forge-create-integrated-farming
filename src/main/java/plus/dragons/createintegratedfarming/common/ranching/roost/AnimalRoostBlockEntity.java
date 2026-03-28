@@ -58,8 +58,13 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
     protected LazyOptional<IItemHandler> outputCapability;
     protected int feedCooldown;
     protected int eggTime = productionCooldown();
-    /** Cached center position to avoid repeated Vec3 allocation in lazyTick. */
+    /**
+     * Cached center position to avoid repeated Vec3 allocation in lazyTick.
+     * Recomputed in lazyTick if the block entity has been moved (e.g., by piston).
+     */
     protected Vec3 centerPos;
+    /** Tracks worldPosition to detect block entity movement (piston, etc.). */
+    private BlockPos lastKnownPos;
 
     public int productionCooldown() {
         return 12000;
@@ -71,6 +76,7 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
         super(type, pos, state);
         setLazyTickRate(20);
         this.centerPos = Vec3.atCenterOf(pos);
+        this.lastKnownPos = pos.immutable();
         this.inventory = new ItemStackHandler(CIFConfig.server().roostingInventorySlotCount.get()) {
             @Override
             public int getSlotLimit(int slot) {
@@ -129,6 +135,11 @@ public abstract class AnimalRoostBlockEntity extends SmartBlockEntity {
     public void lazyTick() {
         if (!(level instanceof ServerLevel serverLevel))
             return;
+        // Detect if block entity was moved (e.g., by piston) and refresh cached position
+        if (!worldPosition.equals(lastKnownPos)) {
+            centerPos = Vec3.atCenterOf(worldPosition);
+            lastKnownPos = worldPosition.immutable();
+        }
         boolean changed = false;
         if (feedCooldown > 0) {
             int prev = feedCooldown;

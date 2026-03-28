@@ -78,7 +78,12 @@ public class RoostBlockItem extends BlockItem {
                 var entity = optional.get().create(level);
                 if (entity == null)
                     continue;
-                return capturable.captureItem(level, context.getItemInHand(), context.getHand(), player, entity);
+                InteractionResult result = capturable.captureItem(level, context.getItemInHand(), context.getHand(), player, entity);
+                if (result.consumesAction()) {
+                    // Consume the spawner: replace with an empty spawner (reset spawn data)
+                    spawnerBE.getSpawner().setEntityId(EntityType.PIG, level, level.random, pos);
+                }
+                return result;
             }
         }
         // Fallback to SpawnData (current spawn entry)
@@ -91,7 +96,11 @@ public class RoostBlockItem extends BlockItem {
                 if (capturable != null) {
                     var entity = optional.get().create(level);
                     if (entity != null) {
-                        return capturable.captureItem(level, context.getItemInHand(), context.getHand(), player, entity);
+                        InteractionResult result = capturable.captureItem(level, context.getItemInHand(), context.getHand(), player, entity);
+                        if (result.consumesAction()) {
+                            spawnerBE.getSpawner().setEntityId(EntityType.PIG, level, level.random, pos);
+                        }
+                        return result;
                     }
                 }
             }

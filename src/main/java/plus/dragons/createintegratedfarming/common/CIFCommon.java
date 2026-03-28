@@ -34,6 +34,7 @@ import plus.dragons.createintegratedfarming.common.registry.CIFArmInteractionPoi
 import plus.dragons.createintegratedfarming.common.registry.CIFBlockEntities;
 import plus.dragons.createintegratedfarming.common.registry.CIFBlockSpoutingBehaviours;
 import plus.dragons.createintegratedfarming.common.registry.CIFBlocks;
+import plus.dragons.createintegratedfarming.common.fishing.net.FishingNetFakePlayer;
 import plus.dragons.createintegratedfarming.common.ranching.roost.chicken.ChickenFoodReloadListener;
 import plus.dragons.createintegratedfarming.common.registry.CIFChickenFoods;
 import plus.dragons.createintegratedfarming.common.registry.CIFCreativeModeTabs;
@@ -99,6 +100,12 @@ public class CIFCommon {
         MinecraftForge.EVENT_BUS.addListener((AddReloadListenerEvent event) -> {
             event.addListener(new ChickenFoodReloadListener());
             LOGGER.debug("[CIFCommon] Registered ChickenFoodReloadListener");
+        });
+        // Clean up shared FakePlayer pool when a dimension is unloaded
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.level.LevelEvent.Unload event) -> {
+            if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                FishingNetFakePlayer.onLevelUnload(serverLevel);
+            }
         });
         CIFData.register();
         CIFConfig.register();

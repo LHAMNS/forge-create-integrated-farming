@@ -88,8 +88,9 @@ public class GooseRoostBlock extends RoostBlock implements IBE<GooseRoostBlockEn
         // Try feeding with item in hand
         if (!stack.isEmpty()) {
             return onBlockEntityUse(level, pos, coop -> {
-                if (coop.feedItem(stack, false)) {
-                    if (!player.getAbilities().instabuild)
+                // Simulate on client to check if feeding is possible without modifying state
+                if (coop.feedItem(stack, level.isClientSide)) {
+                    if (!level.isClientSide && !player.getAbilities().instabuild)
                         stack.shrink(1);
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }
@@ -188,7 +189,8 @@ public class GooseRoostBlock extends RoostBlock implements IBE<GooseRoostBlockEn
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        IBE.onRemove(state, level, pos, newState);
+        if (!isMoving)
+            IBE.onRemove(state, level, pos, newState);
     }
 
     @Override
@@ -231,6 +233,8 @@ public class GooseRoostBlock extends RoostBlock implements IBE<GooseRoostBlockEn
         @Override
         public InteractionResult captureItem(Level level, ItemStack stack, InteractionHand hand, Player player, Entity entity) {
             if (entity instanceof GooseEntity goose && !goose.isBaby()) {
+                // Prevent client-side inventory manipulation to avoid desync in multiplayer
+                if (level.isClientSide) return InteractionResult.SUCCESS;
                 if (player.getAbilities().instabuild)
                     player.getInventory().placeItemBackInInventory(new ItemStack(blockVariant(goose).asItem()));
                 else {
@@ -242,7 +246,7 @@ public class GooseRoostBlock extends RoostBlock implements IBE<GooseRoostBlockEn
                 }
                 goose.playSound(ModSoundEvents.GOOSE_HONK.get());
                 goose.discard();
-                return InteractionResult.sidedSuccess(player.level().isClientSide);
+                return InteractionResult.sidedSuccess(level.isClientSide);
             }
             return InteractionResult.PASS;
         }

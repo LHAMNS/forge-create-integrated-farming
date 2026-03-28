@@ -64,7 +64,9 @@ public abstract class ConditionalLootTableMixin {
                         cir.setReturnValue(LootTable.EMPTY);
                     }
                 } catch (Exception e) {
-                    // If condition processing itself fails, let the original method handle it
+                    // Log condition processing failures to aid debugging malformed data packs
+                    com.mojang.logging.LogUtils.getLogger().warn(
+                            "[CIF] Failed to process conditions for loot table {}: {}", name, e.getMessage());
                 }
             }
         }

@@ -40,6 +40,9 @@ import net.minecraftforge.event.entity.player.ItemFishedEvent;
 import plus.dragons.createintegratedfarming.config.CIFConfig;
 
 public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFishingNetContext<?>> implements MovementBehaviour {
+    /** Cached entity type test to avoid allocation per scan cycle. */
+    private static final EntityTypeTest<net.minecraft.world.entity.Entity, LivingEntity> LIVING_ENTITY_TEST = EntityTypeTest.forClass(LivingEntity.class);
+
     protected abstract T getFishingNetContext(MovementContext context, ServerLevel level);
 
     /** Cached max size for entity capture, set before each entity scan in tick(). */
@@ -65,7 +68,7 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
             if (CIFConfig.server().fishingNetCapturedCreatureDropExpNugget.get()) {
                 int experience = 0;
                 if (entity instanceof Mob mob) {
-                    experience = ForgeEventFactory.getExperienceDrop(entity, fishing.player, mob.getExperienceReward());
+                    experience = ForgeEventFactory.getExperienceDrop(entity, fishing.getPlayer(), mob.getExperienceReward());
                 }
                 int nuggetCount = (experience + 2) / 3;
                 if (nuggetCount > 0) {
@@ -88,7 +91,7 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
                         .expandTowards(context.motion.scale(5))
                         .move(context.position)
                         .inflate(0.2);
-                level.getEntities(EntityTypeTest.forClass(LivingEntity.class), area, this::canCaptureEntity)
+                level.getEntities(LIVING_ENTITY_TEST, area, this::canCaptureEntity)
                         .forEach(entity -> this.onCaptureEntity(context, level, fishing, entity));
             }
         }
@@ -98,7 +101,7 @@ public abstract class AbstractFishingNetMovementBehaviour<T extends AbstractFish
     public void visitNewPosition(MovementContext context, BlockPos pos) {
         if (context.world instanceof ServerLevel level) {
             var fishing = getFishingNetContext(context, level);
-            var isValid = fishing.visitNewPositon(level, pos);
+            var isValid = fishing.visitNewPosition(level, pos);
             if (!isValid || fishing.timeUntilCatch > 0)
                 return;
             if (fishing.canCatch()) {

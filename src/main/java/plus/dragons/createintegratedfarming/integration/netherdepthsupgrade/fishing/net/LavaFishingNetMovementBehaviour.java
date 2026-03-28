@@ -28,7 +28,6 @@ import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.item.ItemStack;
 import plus.dragons.createintegratedfarming.common.fishing.net.AbstractFishingNetMovementBehaviour;
-import plus.dragons.createintegratedfarming.config.CIFConfig;
 
 public class LavaFishingNetMovementBehaviour extends AbstractFishingNetMovementBehaviour<LavaFishingNetContext> {
     @Override
@@ -37,8 +36,7 @@ public class LavaFishingNetMovementBehaviour extends AbstractFishingNetMovementB
             return false;
         if (entity instanceof WaterAnimal || entity instanceof LavaAnimal) {
             var dimensions = entity.getDimensions(Pose.SWIMMING);
-            float maxSize = (float) CIFConfig.server().fishingNetCapturedCreatureMaxSize.get().doubleValue();
-            return dimensions.height < maxSize && dimensions.width < maxSize;
+            return dimensions.height < cachedMaxSize && dimensions.width < cachedMaxSize;
         }
         return false;
     }

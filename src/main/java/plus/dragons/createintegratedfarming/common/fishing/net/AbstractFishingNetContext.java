@@ -36,7 +36,7 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import plus.dragons.createintegratedfarming.config.CIFConfig;
 
 public abstract class AbstractFishingNetContext<T extends FishingHook> {
-    protected final FishingNetFakePlayer player;
+    protected final ServerLevel level;
     protected final ItemStack fishingRod;
     protected final T fishingHook;
     protected final RandomSource random;
@@ -52,10 +52,10 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
     public int timeUntilCatch;
 
     public AbstractFishingNetContext(ServerLevel level, ItemStack fishingRod) {
-        this.player = new FishingNetFakePlayer(level);
+        this.level = level;
         this.fishingRod = fishingRod;
         this.fishingHook = createFishingHook(level);
-        this.fishingHook.setOwner(player);
+        this.fishingHook.setOwner(FishingNetFakePlayer.get(level));
         this.random = fishingHook.random;
         // Cache config values once at construction to avoid per-tick config reads
         this.maxRecordedBlocks = CIFConfig.server().fishingNetMaxRecordedBlocks.get();
@@ -75,7 +75,7 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
     public abstract LootTable getLootTable(ServerLevel level, BlockPos pos);
 
     public FishingNetFakePlayer getPlayer() {
-        return player;
+        return FishingNetFakePlayer.get(level);
     }
 
     public T getFishingHook() {
@@ -92,7 +92,7 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
         this.timeUntilCatch = Math.max(20, (Mth.nextInt(random, 100, 600) - lureSpeed) * cooldownMultiplier);
     }
 
-    public boolean visitNewPositon(ServerLevel level, BlockPos pos) {
+    public boolean visitNewPosition(ServerLevel level, BlockPos pos) {
         if (isPosValidForFishing(level, pos)) {
             if (visitedBlocks.size() < maxRecordedBlocks)
                 visitedBlocks.add(pos.asLong());
@@ -102,6 +102,7 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
     }
 
     public LootParams buildCaptureLootContext(MovementContext context, ServerLevel level, LivingEntity entity) {
+        FishingNetFakePlayer player = getPlayer();
         player.setPos(context.position);
         return new LootParams.Builder(level)
                 .withParameter(LootContextParams.THIS_ENTITY, entity)
@@ -114,6 +115,7 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
     }
 
     public LootParams buildFishingLootContext(MovementContext context, ServerLevel level, BlockPos pos) {
+        FishingNetFakePlayer player = getPlayer();
         fishingHook.setPos(context.position);
         player.setPos(context.position);
         return new LootParams.Builder(level)
@@ -133,6 +135,6 @@ public abstract class AbstractFishingNetContext<T extends FishingHook> {
 
     public void invalidate(ServerLevel level) {
         fishingHook.discard();
-        player.discard();
+        // Do NOT discard the shared FakePlayer -- it may be used by other fishing nets
     }
 }

@@ -29,6 +29,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import plus.dragons.createintegratedfarming.common.fishing.net.AbstractFishingNetContext;
+import plus.dragons.createintegratedfarming.common.fishing.net.FishingNetFakePlayer;
 import plus.dragons.createintegratedfarming.config.CIFConfig;
 import plus.dragons.createintegratedfarming.mixin.netherdepthupgrade.LavaFishingBobberEntityInvoker;
 
@@ -39,7 +40,7 @@ public class LavaFishingNetContext extends AbstractFishingNetContext<LavaFishing
 
     @Override
     protected LavaFishingBobberEntity createFishingHook(ServerLevel level) {
-        return new LavaFishingBobberEntity(player, level, 0, 0);
+        return new LavaFishingBobberEntity(FishingNetFakePlayer.get(level), level, 0, 0);
     }
 
     @Override

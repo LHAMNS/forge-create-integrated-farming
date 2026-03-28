@@ -78,17 +78,14 @@ public class CIFChickenFoods {
     public static final TagKey<Item> CHICKEN_FOOD_TAG = TagKey.create(
             Registries.ITEM, new ResourceLocation("minecraft", "chicken_food"));
 
-    /**
-     * Volatile reference to the current item food map. Replaced atomically by {@link #reload}.
-     * Initialized with an empty map; populated by {@link #register()} and then by the reload listener.
-     */
-    private static volatile Map<Item, ChickenFoodItem> itemFoods = Collections.emptyMap();
+    /** Immutable holder for both food maps, allowing truly atomic replacement via single volatile write. */
+    private record FoodMaps(Map<Item, ChickenFoodItem> items, Map<Fluid, ChickenFoodFluid> fluids) {}
 
     /**
-     * Volatile reference to the current fluid food map. Replaced atomically by {@link #reload}.
-     * Initialized with an empty map; populated by {@link #register()} and then by the reload listener.
+     * Volatile reference to the current food maps. Replaced atomically by {@link #reload}.
+     * Single volatile write ensures both item and fluid maps are always consistent.
      */
-    private static volatile Map<Fluid, ChickenFoodFluid> fluidFoods = Collections.emptyMap();
+    private static volatile FoodMaps foodMaps = new FoodMaps(Collections.emptyMap(), Collections.emptyMap());
 
     /**
      * Cache for tag-based fallback results. When an item is not in the explicit map but matches
@@ -128,10 +125,11 @@ public class CIFChickenFoods {
                     BuiltInRegistries.ITEM.getKey(item));
             return;
         }
-        // Create a mutable copy, add entry, then replace with unmodifiable map
-        Map<Item, ChickenFoodItem> newMap = new HashMap<>(itemFoods);
+        // Create a mutable copy, add entry, then atomically replace both maps
+        FoodMaps current = foodMaps;
+        Map<Item, ChickenFoodItem> newMap = new HashMap<>(current.items());
         newMap.put(item, food);
-        itemFoods = Collections.unmodifiableMap(newMap);
+        foodMaps = new FoodMaps(Collections.unmodifiableMap(newMap), current.fluids());
     }
 
     /**
@@ -153,9 +151,10 @@ public class CIFChickenFoods {
                     BuiltInRegistries.FLUID.getKey(fluid));
             return;
         }
-        Map<Fluid, ChickenFoodFluid> newMap = new HashMap<>(fluidFoods);
+        FoodMaps current = foodMaps;
+        Map<Fluid, ChickenFoodFluid> newMap = new HashMap<>(current.fluids());
         newMap.put(fluid, food);
-        fluidFoods = Collections.unmodifiableMap(newMap);
+        foodMaps = new FoodMaps(current.items(), Collections.unmodifiableMap(newMap));
     }
 
     /**
@@ -171,29 +170,25 @@ public class CIFChickenFoods {
      * @param newFluidFoods the new fluid food map (must not be null; may be empty)
      */
     public static void reload(Map<Item, ChickenFoodItem> newItemFoods, Map<Fluid, ChickenFoodFluid> newFluidFoods) {
+        FoodMaps current = foodMaps;
         if (newItemFoods == null) {
             LOGGER.warn("[CIFChickenFoods] reload() received null item foods map, keeping existing data");
-            newItemFoods = new HashMap<>(itemFoods);
+            newItemFoods = new HashMap<>(current.items());
         }
         if (newFluidFoods == null) {
             LOGGER.warn("[CIFChickenFoods] reload() received null fluid foods map, keeping existing data");
-            newFluidFoods = new HashMap<>(fluidFoods);
+            newFluidFoods = new HashMap<>(current.fluids());
         }
 
-        // Always apply the reload data, even if empty. This allows data packs to
-        // intentionally clear all chicken foods via replace=true with no entries.
-        // If no JSON files exist at all, the reload listener won't call reload(),
-        // so the hardcoded defaults from register() remain in effect.
-
-        // Atomically replace both maps with unmodifiable views.
-        // The caller (ChickenFoodReloadListener) passes freshly built HashMaps that are
-        // not retained, so we wrap them directly without a defensive copy.
-        itemFoods = Collections.unmodifiableMap(newItemFoods);
-        fluidFoods = Collections.unmodifiableMap(newFluidFoods);
+        // Atomically replace both maps with a single volatile write.
+        // This ensures readers always see a consistent pair of item + fluid maps.
+        foodMaps = new FoodMaps(
+                Collections.unmodifiableMap(newItemFoods),
+                Collections.unmodifiableMap(newFluidFoods));
         tagFallbackCache.clear(); // Invalidate tag fallback cache since data may have changed
 
         LOGGER.debug("[CIFChickenFoods] Reloaded: {} item food(s), {} fluid food(s)",
-                itemFoods.size(), fluidFoods.size());
+                newItemFoods.size(), newFluidFoods.size());
     }
 
     /**
@@ -217,7 +212,7 @@ public class CIFChickenFoods {
             return null;
         }
         // Read volatile reference once for consistent snapshot
-        Map<Item, ChickenFoodItem> snapshot = itemFoods;
+        Map<Item, ChickenFoodItem> snapshot = foodMaps.items();
         ChickenFoodItem food = snapshot.get(item);
         if (food != null) {
             return food;
@@ -261,7 +256,7 @@ public class CIFChickenFoods {
             return null;
         }
         // Read volatile reference once for consistent snapshot
-        Map<Fluid, ChickenFoodFluid> snapshot = fluidFoods;
+        Map<Fluid, ChickenFoodFluid> snapshot = foodMaps.fluids();
         return snapshot.get(fluidType);
     }
 
@@ -272,7 +267,7 @@ public class CIFChickenFoods {
      * @return the current item food map (never null)
      */
     public static Map<Item, ChickenFoodItem> getItemFoods() {
-        return itemFoods;
+        return foodMaps.items();
     }
 
     /**
@@ -282,7 +277,7 @@ public class CIFChickenFoods {
      * @return the current fluid food map (never null)
      */
     public static Map<Fluid, ChickenFoodFluid> getFluidFoods() {
-        return fluidFoods;
+        return foodMaps.fluids();
     }
 
     /**
@@ -329,6 +324,6 @@ public class CIFChickenFoods {
         }
 
         LOGGER.info("[CIFChickenFoods] Registered {} hardcoded item food(s) and {} hardcoded fluid food(s)",
-                itemFoods.size(), fluidFoods.size());
+                foodMaps.items().size(), foodMaps.fluids().size());
     }
 }

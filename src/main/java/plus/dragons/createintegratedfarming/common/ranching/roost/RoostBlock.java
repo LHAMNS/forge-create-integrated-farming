@@ -50,7 +50,7 @@ public class RoostBlock extends HorizontalDirectionalBlock implements IWrenchabl
             BooleanOp.ONLY_FIRST);
     protected static final VoxelShaper SHAPE = VoxelShaper.forHorizontal(NORTH_SHAPE, Direction.NORTH);
     protected static final VoxelShape INTERACTION_SHAPE = Shapes.block();
-    protected static final VoxelShape OCCULUSION_SHAPE = box(0, 0, 0, 16, 11, 16);
+    protected static final VoxelShape OCCLUSION_SHAPE = box(0, 0, 0, 16, 11, 16);
 
     public RoostBlock(Properties properties) {
         super(properties);
@@ -100,7 +100,7 @@ public class RoostBlock extends HorizontalDirectionalBlock implements IWrenchabl
 
     @Override
     public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
-        return OCCULUSION_SHAPE;
+        return OCCLUSION_SHAPE;
     }
 
     @Override
