@@ -29,7 +29,11 @@ import plus.dragons.createintegratedfarming.config.CIFConfig;
 
 @Mixin(value = SeatBlock.class, remap = false)
 public class SeatBlockMixin {
-    @ModifyExpressionValue(method = "entityInside", remap = true, at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/actors/seat/SeatBlock;canBePickedUp(Lnet/minecraft/world/entity/Entity;)Z", remap = false))
+    // canBePickedUp is called in updateEntityAfterFallOn (SRG: m_5548_).
+    // @Mixin has remap=false (Create mod class), but updateEntityAfterFallOn is inherited from
+    // vanilla Block and obfuscated to m_5548_ at runtime. canBePickedUp is a Create static method
+    // so it keeps its name.
+    @ModifyExpressionValue(method = "m_5548_", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/actors/seat/SeatBlock;canBePickedUp(Lnet/minecraft/world/entity/Entity;)Z"))
     private boolean createintegratedfarming$ignoreLeashedEntity(boolean original, BlockGetter level, Entity entity) {
         if (entity instanceof Mob mob && mob.isLeashed())
             return original && CIFConfig.server().leashedEntitySitsAutomatically.get();
