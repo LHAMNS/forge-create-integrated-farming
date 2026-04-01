@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/DragonsPlusMinecraft/CreateDragonsPlus/issue
 
 [[mods]]
 modId="create_integrated_farming"
-version="1.0.0"
+version="${mod_version}"
 displayName="Forge-Create: Integrated Farming"
 authors="DragonsPlusMinecraft (Ported to Forge 1.20.1)"
 description='''Fishing nets, chicken roosts, and farming automation for Create.'''
@@ -28,7 +28,7 @@ description='''Fishing nets, chicken roosts, and farming automation for Create.'
 [[dependencies.create_integrated_farming]]
     modId="create"
     mandatory=true
-    versionRange="[0.5.1,)"
+    versionRange="[6.0.8,)"
     ordering="AFTER"
     side="BOTH"
 

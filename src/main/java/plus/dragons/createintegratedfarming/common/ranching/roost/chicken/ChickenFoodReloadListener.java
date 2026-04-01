@@ -275,7 +275,7 @@ public class ChickenFoodReloadListener extends SimpleJsonResourceReloadListener 
         }
 
         // Atomically replace all food maps in CIFChickenFoods
-        CIFChickenFoods.reload(itemFoods, fluidFoods);
+        CIFChickenFoods.reload(itemFoods, fluidFoods, explicitReplace);
 
         LOGGER.info("[ChickenFoodReloadListener] Loaded {} item food(s) and {} fluid food(s) from {} file(s){}",
                 itemCount, fluidCount, entries.size(),

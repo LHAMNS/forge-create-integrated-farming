@@ -177,7 +177,7 @@ public class CIFChickenFoods {
      * @param newItemFoods  the new item food map (must not be null; may be empty)
      * @param newFluidFoods the new fluid food map (must not be null; may be empty)
      */
-    public static void reload(Map<Item, ChickenFoodItem> newItemFoods, Map<Fluid, ChickenFoodFluid> newFluidFoods) {
+    public static void reload(Map<Item, ChickenFoodItem> newItemFoods, Map<Fluid, ChickenFoodFluid> newFluidFoods, boolean explicitReplace) {
         FoodMaps current = foodMaps;
         if (newItemFoods == null) {
             LOGGER.warn("[CIFChickenFoods] reload() received null item foods map, keeping existing data");
@@ -191,7 +191,7 @@ public class CIFChickenFoods {
         // If both maps are empty and we have existing data, preserve defaults.
         // This prevents accidental wipe when all JSON entries are condition-skipped.
         // Callers that intentionally want to clear should use the explicitReplace mechanism.
-        if (newItemFoods.isEmpty() && newFluidFoods.isEmpty() && !current.items().isEmpty()) {
+        if (newItemFoods.isEmpty() && newFluidFoods.isEmpty() && !current.items().isEmpty() && !explicitReplace) {
             LOGGER.debug("[CIFChickenFoods] reload() received empty maps, preserving existing {} item(s) and {} fluid(s)",
                     current.items().size(), current.fluids().size());
             tagFallbackCache.clear();

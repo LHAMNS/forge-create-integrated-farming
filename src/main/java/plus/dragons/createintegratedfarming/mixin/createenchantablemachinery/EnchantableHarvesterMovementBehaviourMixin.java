@@ -33,7 +33,7 @@ import plus.dragons.createintegratedfarming.api.harvester.CustomHarvestBehaviour
 import plus.dragons.createintegratedfarming.integration.ModIntegration.Mods;
 
 @Restriction(require = @Condition(Mods.CREATE_ENCHANTABLE_MACHINERY))
-@Mixin(targets = "io.github.cotrin8672.cem.content.block.harvester.EnchantableHarvesterMovementBehaviour")
+@Mixin(targets = "io.github.cotrin8672.cem.content.block.harvester.EnchantableHarvesterMovementBehaviour", remap = false)
 public class EnchantableHarvesterMovementBehaviourMixin extends HarvesterMovementBehaviour {
     @Inject(method = "visitNewPosition", at = @At(value = "INVOKE", target = "Lio/github/cotrin8672/cem/content/block/harvester/EnchantableHarvesterMovementBehaviour;isValidCrop(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z"), cancellable = true, remap = false)
     private void createintegratedfarming$applyCustomHarvesterBehaviour(MovementContext context, BlockPos pos, CallbackInfo ci, @Local BlockState stateVisited) {

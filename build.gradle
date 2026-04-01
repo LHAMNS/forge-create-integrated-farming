@@ -137,7 +137,9 @@ mixin {
 }
 
 processResources {
-    // No template expansion needed - mods.toml and pack.mcmeta are static
+    filesMatching('META-INF/mods.toml') {
+        expand project.properties
+    }
 }
 
 jar {

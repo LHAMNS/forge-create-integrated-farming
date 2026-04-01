@@ -83,11 +83,16 @@ public class ChickenRoostBlock extends RoostBlock implements IBE<ChickenRoostBlo
         // Try feeding with item in hand
         if (!stack.isEmpty()) {
             return onBlockEntityUse(level, pos, coop -> {
-                // Simulate on client to check if feeding is possible without modifying state
-                if (coop.feedItem(stack, level.isClientSide)) {
-                    if (!level.isClientSide && !player.getAbilities().instabuild)
+                // Client: always assume success to show arm swing; server is authoritative.
+                // Data-pack chicken foods are only loaded server-side, so client-side
+                // prediction with CIFChickenFoods could disagree for custom entries.
+                if (level.isClientSide) {
+                    return InteractionResult.SUCCESS;
+                }
+                if (coop.feedItem(stack, false)) {
+                    if (!player.getAbilities().instabuild)
                         stack.shrink(1);
-                    return InteractionResult.sidedSuccess(level.isClientSide);
+                    return InteractionResult.sidedSuccess(false);
                 }
                 return InteractionResult.PASS;
             });

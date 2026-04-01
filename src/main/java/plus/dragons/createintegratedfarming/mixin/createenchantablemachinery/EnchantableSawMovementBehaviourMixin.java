@@ -36,7 +36,7 @@ import plus.dragons.createintegratedfarming.api.saw.SawableBlockTags;
 import plus.dragons.createintegratedfarming.integration.ModIntegration;
 
 @Restriction(require = @Condition(ModIntegration.Mods.CREATE_ENCHANTABLE_MACHINERY))
-@Mixin(targets = "io.github.cotrin8672.cem.content.block.saw.EnchantableSawMovementBehaviour")
+@Mixin(targets = "io.github.cotrin8672.cem.content.block.saw.EnchantableSawMovementBehaviour", remap = false)
 public class EnchantableSawMovementBehaviourMixin extends SawMovementBehaviour {
     @Final
     @Shadow
