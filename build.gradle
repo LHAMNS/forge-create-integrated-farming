@@ -103,7 +103,7 @@ dependencies {
 
     // Optional mod integrations (compile only)
     compileOnly fg.deobf("maven.modrinth:nether-depths-upgrade:3.1.5-1.20")
-    compileOnly fg.deobf("maven.modrinth:untitled-duck-mod:1.5.2")
+    compileOnly fg.deobf("maven.modrinth:untitled-duck-mod:ESnyefPs")
     compileOnly fg.deobf("maven.modrinth:my-nethers-delight:1.20.1-1.8")
     compileOnly fg.deobf("maven.modrinth:corn-delight:1.1.9-1.20.1")
     compileOnly fg.deobf("maven.modrinth:mmlib:1.6.34-1.20.1")
@@ -111,9 +111,9 @@ dependencies {
     compileOnly fg.deobf("maven.modrinth:create-enchantable-machinery:3.6.0+mc1.20.1-forge")
     compileOnly fg.deobf("maven.modrinth:create-dreams-and-desires:1.20.1-0.2c.PREBETA")
     compileOnly fg.deobf("maven.modrinth:create-garnished:2.1.7.b+1.20.1-forge")
-    compileOnly fg.deobf("maven.modrinth:geckolib:4.8.3")
-    // Delight o' Flight - not on Modrinth, use CurseMaven (1.21.1 jar as compile stub)
-    compileOnly files('libs/DelightoFlight-1.21.1-1.2.3.jar')
+    compileOnly fg.deobf("maven.modrinth:geckolib:4.4.9")
+    // Delight o' Flight - minimal Java 17 stub for compile-only (runtime uses real mod jar)
+    compileOnly files('libs/DelightoFlight-1.20.1-stub.jar')
     // GeckoLib stub for AnimationController$KeyframeEventHandler (missing in standard GeckoLib releases)
     compileOnly files('libs/geckolib-stub.jar')
 
