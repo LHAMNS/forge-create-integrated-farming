@@ -41,6 +41,11 @@ minecraft {
         server {
             args '--nogui'
         }
+
+        gameTestServer {
+            property 'forge.gameTestServer.enabled', 'true'
+            args '--nogui'
+        }
     }
 }
 
