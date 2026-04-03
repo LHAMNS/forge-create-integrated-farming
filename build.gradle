@@ -43,7 +43,7 @@ minecraft {
         }
 
         gameTestServer {
-            property 'forge.gameTestServer.enabled', 'true'
+            property 'forge.enabledGameTestNamespaces', 'create_integrated_farming'
             args '--nogui'
         }
     }
