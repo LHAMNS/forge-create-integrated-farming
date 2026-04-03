@@ -22,11 +22,14 @@ import com.cloudmeow.delightoflight.registry.DFBlocks;
 import me.fallenbreath.conditionalmixin.api.annotation.Condition;
 import me.fallenbreath.conditionalmixin.api.annotation.Restriction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DirectionalBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -46,10 +49,18 @@ public abstract class LightningBoltMixin extends Entity {
 
     @Inject(method = "powerLightningRod", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/LightningRodBlock;onLightningStrike(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V", shift = At.Shift.AFTER))
     private void createintegratedfarming$onLightningStrike(CallbackInfo ci) {
-        BlockPos blockpos = this.getStrikePosition();
-        BlockPos below = blockpos.below();
+        BlockPos strikePos = this.getStrikePosition();
         Level world = this.level;
-        BlockPos[] roll = { below, below.east(), below.west(), below.north(), below.south() };
+        BlockState rodState = world.getBlockState(strikePos);
+        BlockPos basePos;
+        if (rodState.hasProperty(DirectionalBlock.FACING)) {
+            Direction rodFacing = rodState.getValue(DirectionalBlock.FACING);
+            basePos = strikePos.relative(rodFacing.getOpposite());
+        } else {
+            // Fallback: assume vertical rod
+            basePos = strikePos.below();
+        }
+        BlockPos[] roll = { basePos, basePos.east(), basePos.west(), basePos.north(), basePos.south() };
         for (var pos : roll) {
             var state = world.getBlockState(pos);
             if (state.is(Blocks.DIRT) || state.is(Blocks.GRASS_BLOCK)) {
