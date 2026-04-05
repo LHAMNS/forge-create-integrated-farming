@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1-mc1.20.1-fix1] - 2026-04-05
+
+### Fixed
+- **SeatBlockMixin SRG/MCP dual-environment compatibility**: `method = "m_5548_"` changed to dual-name `{"m_5548_", "updateEntityAfterFallOn"}` with `require = 1`. The mixin previously only worked in production (SRG); it now works in both dev (MCP) and production environments.
+- **Invalid resource pack path**: Removed `LICENSE.txt` from `textures/block/farmersdelight/` — Minecraft's resource pack loader rejects non-texture files in texture directories, producing an ERROR at client startup.
+
+### Added
+- `CIFRegistryIntegrationTest`: 10 GameTests verifying all core blocks (Fishing Net, Roost, Chicken Roost), Fishing Net WATERLOGGED property, Chicken Roost block entity type, chicken food defaults (wheat seeds), CustomHarvestBehaviour registry, SawableBlockTags constants, ModIntegration enum, server config accessibility, CHICKEN_FOOD_TAG, and cross-module CDP dependency accessibility (CDPRegistrate, BehaviourProvider, WaterAndLavaLoggedBlock).
+
 ## [1.0.0-mc1.20.1] - 2026-03-28
 
 ### Added
