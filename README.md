@@ -2,6 +2,12 @@
 
 A Forge 1.20.1 port of [Create: Integrated Farming](https://github.com/DragonsPlusMinecraft/CreateIntegratedFarming), originally developed for NeoForge 1.21.1 by **DragonsPlusMinecraft**.
 
+## Acknowledgements
+
+Thanks to the following contributors for feedback and suggestions:
+
+- **[@PhyX-Meow](https://github.com/phyxmeow)** - Feature request discussion on Central Kitchen compatibility ([#1](https://github.com/LHAMNS/forge-create-integrated-farming/issues/1))
+
 This mod adds farming, fishing, and ranching automation to [Create](https://www.curseforge.com/minecraft/mc-mods/create), with deep integration for Farmer's Delight and other food mods.
 
 ## Features
